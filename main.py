@@ -7,6 +7,9 @@ screen = pygame.display.set_mode((1280, 720))
 clock = pygame.time.Clock()
 running = True
 
+# Player setup
+###to be implemented###
+
 # Game loop
 while running:
     # Event handling
