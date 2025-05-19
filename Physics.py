@@ -4,15 +4,6 @@ class Physics:
         self.air_density = 1.225  # kg/m^3
         self.drag_coefficient = 0.47  # dimensionless
         self.cross_sectional_area = 0.01  # m^2
-
-    def calculate_drag_force(self, velocity):
-        """
-        Calculate the drag force on an object.
-        
-        :param velocity: Velocity of the object in m/s.
-        :return: Drag force in Newtons.
-        """
-        return 0.5 * self.air_density * self.drag_coefficient * self.cross_sectional_area * velocity**2
     
     """
     Gives gravity

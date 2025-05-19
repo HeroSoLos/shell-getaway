@@ -1,3 +1,5 @@
+import pygame
+
 class Player:
     
     """
@@ -9,10 +11,11 @@ class Player:
         gun (BaseGun): gun,
         sprite (str, optional): sprite, default None, is a path to the image
     """
-    def __init__(self, health, move_speed, gun, sprite=None):
+    def __init__(self, health, move_speed, gun, screen, sprite=None):
         self.health = health
         self.move_speed = move_speed
         self.gun = gun
+        self.screen = screen
         self.sprite = sprite
         self.velocity = [0, 0]
         self.position = [0, 0]
@@ -41,6 +44,19 @@ class Player:
     def update_position(self):
         self.position[0] += self.velocity[0]
         self.position[1] += self.velocity[1]
+    
+    """
+    Draw the player on the screen
+    Precondition: The player has a sprite or a default shape.
+    Postcondition: The player has been drawn on the screen.
+    Returns: None
+    """
+    def draw(self):
+        if self.sprite:
+            image = pygame.image.load(self.sprite)
+            self.screen.blit(image, (self.position[0], self.position[1]))
+        else:
+            pygame.draw.rect(self.screen, (255, 0, 0), (self.position[0], self.position[1], 50, 50))
         
     
         
