@@ -1,10 +1,28 @@
+import math
+
 class Physics:
     def __init__(self):
         self.gravity = 9.81  # m/s^2
-        self.air_density = 1.225  # kg/m^3
-        self.drag_coefficient = 0.47  # dimensionless
-        self.cross_sectional_area = 0.01  # m^2
+        self.friction_coefficient = 0.6  # Arbitrary value to control friction strength
+        self.velocity_threshold = 0.01  # Minimum velocity before setting it to 0
     
+    def applyFriction(self, obj_list, delta_time=0.016):
+        for obj in obj_list:
+            if hasattr(obj, 'velocity'):
+                if obj.velocity[0] > 0:
+                    obj.velocity[0] -= self.friction_coefficient * delta_time
+                    if obj.velocity[0] < 0:
+                        obj.velocity[0] = 0
+                elif obj.velocity[0] < 0:
+                    obj.velocity[0] += self.friction_coefficient * delta_time
+                    if obj.velocity[0] > 0:
+                        obj.velocity[0] = 0
+
+                if abs(obj.velocity[0]) < self.velocity_threshold:
+                    obj.velocity[0] = 0
+                if abs(obj.velocity[1]) < self.velocity_threshold:
+                    obj.velocity[1] = 0
+
     """
     Gives gravity
     Args:

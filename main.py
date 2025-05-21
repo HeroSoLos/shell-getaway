@@ -55,7 +55,7 @@ while running:
     
     
     
-    Physics.applyGravity([p]) 
+    Physics.applyGravity([p])
     p.update_position()
     
     

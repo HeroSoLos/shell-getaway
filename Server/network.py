@@ -4,7 +4,7 @@ from Server.utils import *
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "10.168.107.65"
+        self.server = "10.176.107.155"
         self.port = 5555
         self.addr = (self.server, self.port)
         self.pos = self.connect()
@@ -23,7 +23,7 @@ class Network:
         try:
             if not isinstance(data, tuple) or len(data) != 2:
                 print(f"Invalid data format: {data}")
-                return (0.0, 0.0)  # Default position if data is invalid
+                return (0.0, 0.0)
             print(f"Sending to server: {data}")
             self.client.send(str.encode(make_pos(data)))
             reply = self.client.recv(2048).decode()
