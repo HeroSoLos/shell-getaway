@@ -42,8 +42,10 @@ class Player:
     Returns: None
     """
     def update_position(self):
-        self.position[0] += self.velocity[0]
-        self.position[1] += self.velocity[1]
+        self.position = (
+            self.position[0] + self.velocity[0],
+            self.position[1] + self.velocity[1],
+        )
     
     """
     Draw the player on the screen
@@ -57,6 +59,5 @@ class Player:
             self.screen.blit(image, (self.position[0], self.position[1]))
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (self.position[0], self.position[1], 50, 50))
-        
-    
-        
+
+
