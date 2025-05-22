@@ -1,6 +1,6 @@
 import socket
 from Server.utils import *
-from config import SERVER_IP
+from Server.config import SERVER_IP
 
 class Network:
     def __init__(self):
