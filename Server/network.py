@@ -1,10 +1,11 @@
 import socket
 from Server.utils import *
+from config import SERVER_IP
 
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server = "10.176.107.155"
+        self.server = SERVER_IP
         self.port = 5555
         self.addr = (self.server, self.port)
         self.pos = None
