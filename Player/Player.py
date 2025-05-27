@@ -56,6 +56,7 @@ class Player:
     def draw(self):
         if self.sprite:
             image = pygame.image.load(self.sprite)
+            image = pygame.transform.scale(image, (50, 50))
             self.screen.blit(image, (self.position[0], self.position[1]))
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (self.position[0], self.position[1], 50, 50))

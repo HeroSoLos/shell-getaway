@@ -16,9 +16,9 @@ n = Network()
 Physics = Physics()
 gun = BaseGun(magazine_size=10, bullet_speed=5)
 startPos = tuple(read_pos(n.getPos()))
-p = Player(health=100, move_speed=5, gun=gun, screen=screen)
+p = Player(health=100, move_speed=5, gun=gun, screen=screen, sprite="assets/Egg_sprite.png")
 p.position = startPos
-p2 = Player(health=100, move_speed=5, gun=gun, screen=screen)
+p2 = Player(health=100, move_speed=5, gun=gun, screen=screen, sprite="assets/Egg_sprite.png")
 p2.position = (0, 0)
 
 # Game loop
