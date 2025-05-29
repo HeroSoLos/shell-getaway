@@ -1,39 +1,3 @@
-class Bullet:
-    """
-    Self explanatory
-    """
-    
-    """
-    Init the bullet with movement type, speed, and direction.
-    Args:
-        movement_type (str): hitscan or projectile or homing, etc.
-        speed (float): self explanatory
-        direction (list): vector showing dir
-    """
-    def __init__(self, movement_type, speed, direction):
-        self.movement_type = movement_type
-        self.speed = speed
-        self.direction = direction
-
-    """
-    like a toString
-    Returns: string representation of the bullet
-    """
-    def __repr__(self):
-        return f"Bullet(speed={self.speed}, direction={self.direction})"
-
-    """
-    Move the bullet
-    
-    Precondition: The bullet has a speed and direction.
-    Postcondition: The bullet has moved in the direction of its speed.
-    Returns: None   
-    """
-    def move(self):
-        # Implement movement logic here tomorrow - andrew
-        pass
-    
-    
 class BaseGun:
     """
     base gun, no specialities
@@ -46,11 +10,28 @@ class BaseGun:
         bullet_speed (float): used to send bullet speed
         damage (int, optional): damage, default 1
     """
-    def __init__(self, magazine_size, bullet_speed, damage=1):
+    def __init__(self, magazine_size, x, y, bullet_speed, damage=1):
         self.magazine_size = magazine_size
         self.bullet_speed = bullet_speed
         self.current_bullets = magazine_size 
         self.damage = damage
+        self.x = x
+        self.y = y
+    
+    
+    """
+    Update the position of the gun.
+    Args:
+        x (int): x position
+        y (int): y position
+    Precondition: The gun has a position.
+    Postcondition: The gun has updated its position.
+    Returns: None
+    """
+    def update_pos(self, x, y):
+
+        self.x = x
+        self.y = y
 
     """
     Reloads
@@ -70,10 +51,20 @@ class BaseGun:
     Postcondition: The gun has fired a bullet and decreased its current bullets.
     Returns: Bullet
     """
-    def shoot(self, direction) -> Bullet:
+    def shoot(self, direction, player):
         if self.current_bullets <= 0:
             self.reload()
             return None
         self.current_bullets -= 1
-        bullet = Bullet(self.bullet_speed, direction)
-        return bullet
+        
+        # spawn ubllet
+        dx = player.rect.x - self.x
+        slope = direction[1] / direction[0] if direction[0] != 0 else 0
+        dy = slope * dx
+        player.rect.collidepoint((self.x, self.y))
+        player.health -= self.damage
+        
+        
+        
+        
+        

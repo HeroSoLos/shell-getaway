@@ -14,12 +14,13 @@ running = True
 # Object setup
 n = Network()
 Physics = Physics()
-gun = BaseGun(magazine_size=10, bullet_speed=5)
+gun = BaseGun(magazine_size=10, x=0, y=0, bullet_speed=5)
 startPos = tuple(read_pos(n.getPos()))
-p = Player(health=100, move_speed=5, gun=gun, screen=screen, sprite="assets/Egg_sprite.png")
+p = Player(health=100, move_speed=5, gun=gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
 p.position = startPos
-p2 = Player(health=100, move_speed=5, gun=gun, screen=screen, sprite="assets/Egg_sprite.png")
+p2 = Player(health=100, move_speed=5, gun=gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
 p2.position = (0, 0)
+p.player = p2
 
 # Game loop
 while running:
@@ -27,6 +28,10 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                direction = [pygame.mouse.get_pos()[0] - p.position[0], pygame.mouse.get_pos()[1] - p.position[1]]
+                p.shoot(direction, p2)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
@@ -51,8 +56,6 @@ while running:
     if keys[pygame.K_UP]:
         direction[1] = -.1
     p.update_velocity(direction)
-
-    
     
     
     Physics.applyGravity([p])
@@ -60,8 +63,11 @@ while running:
     
     
     # Send player position to server
-    p2Pos = n.send(p.position)  # No need to call make_pos here, it's handled in Network.send
-    p2.position = p2Pos
+    p2data = list(p.position)
+    p2data.append(p2.health)
+    p2Pos = n.send(p2data)
+    p2.position = [p2Pos[0], p2Pos[1]]
+    p2.health = p2Pos[2]
     
     # Update
     p.draw()

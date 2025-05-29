@@ -11,15 +11,18 @@ class Player:
         gun (BaseGun): gun,
         sprite (str, optional): sprite, default None, is a path to the image
     """
-    def __init__(self, health, move_speed, gun, screen, sprite=None):
+    def __init__(self, health, move_speed, gun, screen, player, sprite=None):
         self.health = health
         self.move_speed = move_speed
         self.gun = gun
         self.screen = screen
+        self.player = player
         self.sprite = sprite
         self.velocity = [0, 0]
         self.position = [0, 0]
-        
+        self.rect = pygame.Rect(0, 0, 50, 50) # x y , width, height
+    
+    
     def __repr__(self):
         return f"Player(health={self.health}, move_speed={self.move_speed}, gun={self.gun}, sprite={self.sprite})"
 
@@ -42,10 +45,10 @@ class Player:
     Returns: None
     """
     def update_position(self):
-        self.position = (
-            self.position[0] + self.velocity[0],
-            self.position[1] + self.velocity[1],
-        )
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        self.position = [self.rect.x, self.rect.y]
+        self.gun.update_pos(self.rect.x, self.rect.y)
     
     """
     Draw the player on the screen
@@ -57,8 +60,25 @@ class Player:
         if self.sprite:
             image = pygame.image.load(self.sprite)
             image = pygame.transform.scale(image, (50, 50))
-            self.screen.blit(image, (self.position[0], self.position[1]))
+            self.screen.blit(image, (self.rect.x, self.rect.y))
         else:
-            pygame.draw.rect(self.screen, (255, 0, 0), (self.position[0], self.position[1], 50, 50))
+            pygame.draw.rect(self.screen, (255, 0, 0), (self.rect.x, self.rect.y, 50, 50))
+            
+        health_bar = pygame.Rect(self.rect.x, self.rect.y - 10, 50 * (self.health / 100), 5)
+        pygame.draw.rect(self.screen, (0, 255, 0), health_bar)
+            
+    """
+    Shoot a bullet in the specified direction.
+    Args:
+        direction (list): direction of bullet
+    Precondition: The player has a gun.
+    Postcondition: The player has fired a bullet.
+    Returns: Bullet
+    """
+    def shoot(self, direction, player):
+        if self.gun:
+            self.gun.shoot(direction, player)
+        return None
 
+    
 

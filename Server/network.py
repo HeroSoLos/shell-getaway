@@ -29,11 +29,11 @@ class Network:
                 print("Socket is not connected. Attempting to reconnect...")
                 self.connect()
                 if not self.pos:
-                    return (0.0, 0.0)
+                    return (0.0, 0.0, 100.0)
             
-            if not isinstance(data, tuple) or len(data) != 2:
+            if not isinstance(data, list) or len(data) != 3:
                 print(f"Invalid data format: {data}")
-                return (0.0, 0.0)
+                return (0.0, 0.0, 100.0)
             
             print(f"Sending to server: {data}")
             self.client.send(str.encode(make_pos(data)))
@@ -42,4 +42,4 @@ class Network:
             return read_pos(reply)
         except socket.error as e:
             print(f"Socket error: {e}")
-            return (0.0, 0.0)
+            return (0.0, 0.0, 100.0)

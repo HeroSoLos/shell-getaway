@@ -16,7 +16,7 @@ except socket.error as e:
 s.listen(2)
 print("Waiting for a connection...")
 
-pos = [(0, 0), (100, 100)]
+pos = [(0, 0, 100), (100, 100, 100)]
 def threaded_client(conn, player):
     try:
         conn.send(str.encode(make_pos(pos[player])))
@@ -34,13 +34,13 @@ def threaded_client(conn, player):
 
             print(f"Raw data from player {player}: {raw_data}")
             data = read_pos(raw_data)
-            if data == (0.0, 0.0) and raw_data != "0.0,0.0":
+            if data == (0.0, 0.0, 100) and raw_data != "0.0,0.0,100.0":
                 print(f"Invalid data received from player {player}: {raw_data}")
-                continue  # Skip processing invalid data
+                continue
 
             pos[player] = data
 
-            reply = pos[1 - player] if player in (0, 1) else (0.0, 0.0)
+            reply = pos[1 - player] if player in (0, 1) else (0.0, 0.0, 100.0)
             print(f"Received from player {player}: {data}, Sending: {reply}")
 
             conn.sendall(str.encode(make_pos(reply)))
