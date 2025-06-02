@@ -51,20 +51,18 @@ class BaseGun:
     Postcondition: The gun has fired a bullet and decreased its current bullets.
     Returns: Bullet
     """
-    def shoot(self, direction, player):
+    def shoot(self, y, p2):
         if self.current_bullets <= 0:
             self.reload()
             return None
         self.current_bullets -= 1
         
-        # spawn ubllet
-        dx = player.position[0] - self.x
-        slope = direction[1] / direction[0] if direction[0] != 0 else 0
-        dy = slope * dx
-        if player.rect.collidepoint((player.position[0], self.y+dy)):
-            player.health -= self.damage
+        if p2.rect.collidepoint((p2.rect.x, y)):
+            p2.health -= self.damage
         
-        
+        # print(f"Enemy Location: {p2.rect.center}")
+        # print(f"Bullet Location: ({p2.position[0]}, {y})")
+        # print(f"Player: {p2}")
         
         
         

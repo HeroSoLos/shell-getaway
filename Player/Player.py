@@ -48,7 +48,7 @@ class Player:
         self.position = (self.position[0]+self.velocity[0], self.position[1]+self.velocity[1])
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
-        self.gun.update_pos(self.rect.x, self.rect.y)
+        self.gun.update_pos(self.position[0], self.position[1])
     
     """
     Draw the player on the screen
@@ -75,9 +75,9 @@ class Player:
     Postcondition: The player has fired a bullet.
     Returns: Bullet
     """
-    def shoot(self, direction, player):
+    def shoot(self, y, p2):
         if self.gun:
-            self.gun.shoot(direction, player)
+            self.gun.shoot(y, p2)
         return None
 
     

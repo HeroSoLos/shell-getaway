@@ -35,10 +35,10 @@ class Network:
                 print(f"Invalid data format: {data}")
                 return (0.0, 0.0, 100.0)
             
-            print(f"Sending to server: {data}")
+            # print(f"Sending to server: {data}")
             self.client.send(str.encode(make_pos(data)))
             reply = self.client.recv(2048).decode()
-            print(f"Received from server: {reply}")
+            # print(f"Received from server: {reply}")
             return read_pos(reply)
         except socket.error as e:
             print(f"Socket error: {e}")

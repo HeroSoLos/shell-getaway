@@ -30,8 +30,8 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                direction = [pygame.mouse.get_pos()[0] - p.position[0], pygame.mouse.get_pos()[1] - p.position[1]]
-                p.shoot(direction, p2)
+                m_x, m_y = pygame.mouse.get_pos()
+                p.shoot(m_y, p2)
 
     # fill the screen with a color to wipe away anything from last frame
     screen.fill("black")
@@ -78,9 +78,9 @@ while running:
     p.health = p2Pos[2]
     
     # Update
-    if p.health <= 0:
+    if p.health > 0:
         p.draw()
-    if p2.health <= 0:
+    if p2.health > 0:
         p2.draw()
     pygame.display.flip()
 
