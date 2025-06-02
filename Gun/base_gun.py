@@ -10,7 +10,7 @@ class BaseGun:
         bullet_speed (float): used to send bullet speed
         damage (int, optional): damage, default 1
     """
-    def __init__(self, magazine_size, x, y, bullet_speed, damage=1):
+    def __init__(self, magazine_size, x, y, bullet_speed, damage=10):
         self.magazine_size = magazine_size
         self.bullet_speed = bullet_speed
         self.current_bullets = magazine_size 
@@ -58,11 +58,12 @@ class BaseGun:
         self.current_bullets -= 1
         
         # spawn ubllet
-        dx = player.rect.x - self.x
+        dx = player.position[0] - self.x
         slope = direction[1] / direction[0] if direction[0] != 0 else 0
         dy = slope * dx
-        player.rect.collidepoint((self.x, self.y))
-        player.health -= self.damage
+        if player.rect.collidepoint((player.position[0], self.y+dy)):
+            player.health -= self.damage
+        
         
         
         

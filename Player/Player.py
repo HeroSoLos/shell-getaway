@@ -45,9 +45,9 @@ class Player:
     Returns: None
     """
     def update_position(self):
-        self.rect.x += self.velocity[0]
-        self.rect.y += self.velocity[1]
-        self.position = [self.rect.x, self.rect.y]
+        self.position = (self.position[0]+self.velocity[0], self.position[1]+self.velocity[1])
+        self.rect.x = self.position[0]
+        self.rect.y = self.position[1]
         self.gun.update_pos(self.rect.x, self.rect.y)
     
     """

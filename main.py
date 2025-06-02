@@ -45,6 +45,13 @@ while running:
     if p.position[1] > screen.get_height() - 50:
         p.position = (p.position[0], screen.get_height() - 50)
         p.velocity[1] = 0
+    if p.position[0] < 0:
+        p.position = (0, p.position[1])
+        p.velocity[0] = 0
+    if p.position[0] > screen.get_width() - 50:
+        p.position = (screen.get_width() - 50, p.position[1])
+        p.velocity[0] = 0
+    
 
     # Update player position based on input
     keys = pygame.key.get_pressed()
@@ -66,12 +73,15 @@ while running:
     p2data = list(p.position)
     p2data.append(p2.health)
     p2Pos = n.send(p2data)
-    p2.position = [p2Pos[0], p2Pos[1]]
-    p2.health = p2Pos[2]
+    p2.rect.x = p2Pos[0]
+    p2.rect.y = p2Pos[1]
+    p.health = p2Pos[2]
     
     # Update
-    p.draw()
-    p2.draw()
+    if p.health <= 0:
+        p.draw()
+    if p2.health <= 0:
+        p2.draw()
     pygame.display.flip()
 
     # Time/FPS control
