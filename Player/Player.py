@@ -46,7 +46,7 @@ class Player:
         self.position = (self.position[0]+self.velocity[0], self.position[1]+self.velocity[1])
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
-        self.gun.update_pos(self.position[0], self.position[1])
+        self.gun.update_pos(self.rect.x, self.rect.y)
     
     """
     Draw the player on the screen.

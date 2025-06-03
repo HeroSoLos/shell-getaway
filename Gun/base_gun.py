@@ -1,5 +1,6 @@
 import pygame
 import pygame.transform
+import math
 
 class BaseGun:
     """
@@ -75,15 +76,17 @@ class BaseGun:
         
     def draw(self, screen, m_x, m_y):
         if self.sprite:
-            if m_x > self.x:
-                image = pygame.image.load(self.sprite)
-                image = pygame.transform.scale(image, (25, 25))
-                screen.blit(image, (self.x+20, self.y+10))
+            gun_pivot_x = self.x + 25 
+            gun_pivot_y = self.y + 25
+            angle_rad = math.atan2(m_y - gun_pivot_y, m_x - gun_pivot_x)
+            angle_deg = math.degrees(angle_rad)
+            original_image = pygame.image.load(self.sprite)
+            rotated_image = pygame.transform.rotate(original_image, -angle_deg)
+            if m_x < self.x:
+                new_rect = rotated_image.get_rect(center=(gun_pivot_x-10, gun_pivot_y))
             else:
-                image = pygame.image.load(self.sprite)
-                image = pygame.transform.scale(image, (25, 25))
-                image = pygame.transform.flip(image, True, False)
-                screen.blit(image, (self.x, self.y+10))
+                new_rect = rotated_image.get_rect(center=(gun_pivot_x+10, gun_pivot_y))
+            screen.blit(rotated_image, new_rect.topleft)
         else:
             pygame.draw.rect(screen, (0, 255, 0), (self.x, self.rect.y, 25, 25))
          

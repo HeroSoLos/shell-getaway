@@ -105,6 +105,7 @@ while running:
             p2.position[1] = p2_server_data[1]
             p2.health = p2_server_data[2]
             p2.rect.topleft = (p2.position[0], p2.position[1])
+            p2.gun.update_pos(p2.rect.x, p2.rect.y)
 
         if "projectiles" in current_game_state:
             for proj_data in current_game_state["projectiles"]:
@@ -118,7 +119,7 @@ while running:
         p.draw(m_x_render, m_y_render)
 
     if p2.health > 0:
-        p2.draw(p2.position[0], p2.position[1])
+        p2.draw(p.rect.centerx, p.rect.centery)
 
     pygame.display.flip()
     clock.tick(60)
