@@ -1,15 +1,23 @@
+import sys
+import os
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.append(project_root)
+
 import socket
 from _thread import *
 from utils import *
 from config import SERVER_IP
-from Gun.projectile import Projectile # Import Projectile class
-import math # For vector calculations
-import threading # For locking
+from Gun.projectile import Projectile
+import math
+import threading
+
 
 server = SERVER_IP
 port = 5555
-projectile_lock = threading.Lock() # Lock for synchronizing access to projectiles
-
+projectile_lock = threading.Lock()
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

@@ -12,16 +12,14 @@ class BaseGun:
         magazine_size (int): self explanatory
         bullet_speed (float): used to send bullet speed
         damage (int, optional): damage, default 1
-        projectile_type (str, optional): type of projectile, default 'standard_bullet'
     """
-    def __init__(self, magazine_size, x, y, sprite, damage=10, projectile_type='standard_bullet'):
+    def __init__(self, magazine_size, x, y, sprite, damage=10):
         self.magazine_size = magazine_size
         self.sprite = sprite
-        self.current_bullets = magazine_size
+        self.current_bullets = magazine_size 
         self.damage = damage
         self.x = x
         self.y = y
-        self.projectile_type = projectile_type
     
     
     """
@@ -49,29 +47,25 @@ class BaseGun:
         print("Gun reloaded.")
 
     """
-    Shoots a projectile towards the target coordinates.
+    Shoots a bullet in the specified direction.
     Args:
-        target_x (int): The x-coordinate of the target.
-        target_y (int): The y-coordinate of the target.
-    Precondition: The gun may or may not have bullets left.
-    Postcondition: If bullets are available, current bullets are decremented.
-    Returns: A dictionary containing projectile information if a shot is fired, otherwise None.
+        direction (list): direction of bullet
+    Precondition: The gun has bullets left.
+    Postcondition: The gun has fired a bullet and decreased its current bullets.
+    Returns: Bullet
     """
-    def shoot(self, target_x, target_y):
+    def shoot(self, y, p2):
         if self.current_bullets <= 0:
             self.reload()
-            return None  # Or an indicator that no shot was fired
-        
+            return None
         self.current_bullets -= 1
         
-        return {
-            'gun_x': self.x,
-            'gun_y': self.y,
-            'target_x': target_x,
-            'target_y': target_y,
-            'projectile_type': self.projectile_type,
-            'damage': self.damage  # Assuming damage is tied to the gun/projectile type
-        }
+        if p2.rect.collidepoint((p2.rect.x, y)):
+            p2.health -= self.damage
+        
+        # print(f"Enemy Location: {p2.rect.center}")
+        # print(f"Bullet Location: ({p2.position[0]}, {y})")
+        # print(f"Player: {p2}")
         
     def draw(self, screen, m_x, m_y):
         if self.sprite:
