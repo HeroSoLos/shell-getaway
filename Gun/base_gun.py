@@ -73,7 +73,17 @@ class BaseGun:
             'projectile_type': self.projectile_type,
             'damage': self.damage
         }
-        
+    
+    """
+    Draw the gun on the screen.
+    Args:
+        screen (screen): screen to draw it on
+        m_x (int): Mouse x-coordinate.
+        m_y (int): Mouse y-coordinate.
+    Precondition: The gun has a sprite or a default shape.
+    Postcondition: The gun has been drawn on the screen.
+    Returns: None
+    """
     def draw(self, screen, m_x, m_y):
         if self.sprite:
             gun_pivot_x = self.x + 25 
@@ -82,7 +92,7 @@ class BaseGun:
             angle_deg = math.degrees(angle_rad)
             original_image = pygame.image.load(self.sprite)
             rotated_image = pygame.transform.rotate(original_image, -angle_deg)
-            if m_x < self.x:
+            if m_x < self.x+25:
                 new_rect = rotated_image.get_rect(center=(gun_pivot_x-10, gun_pivot_y))
             else:
                 new_rect = rotated_image.get_rect(center=(gun_pivot_x+10, gun_pivot_y))

@@ -44,16 +44,18 @@ p2 = Player(health=other_initial_health, move_speed=5, gun=p2_gun, screen=screen
 p2.position = list(other_initial_pos)
 p.player = p2
 
+m_x = 0
+m_y = 0
 # Game loop
 while running:
     data_to_send = [p.position[0], p.position[1], p.health]
 
+    m_x, m_y = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                m_x, m_y = pygame.mouse.get_pos()
                 shoot_command_details = p.shoot(m_x, m_y)
                 if shoot_command_details:
                     data_to_send = {"action": "shoot", "details": shoot_command_details}
@@ -82,15 +84,13 @@ while running:
         direction[0] = .1
     if keys[pygame.K_UP]:
         direction[1] = -.1
-    if keys[pygame.K_r]:
-        p.health = 100
-        p2.health = 100
     p.update_velocity(direction)
 
     Physics.applyGravity([p])
     p.update_position()
 
     if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
+        # data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
         data_to_send = [p.position[0], p.position[1], p.health]
 
     current_game_state = n.send(data_to_send)
@@ -119,7 +119,8 @@ while running:
         p.draw(m_x_render, m_y_render)
 
     if p2.health > 0:
-        p2.draw(p.rect.centerx, p.rect.centery)
+        p2.draw(m_x_render, m_y_render)
+        # p2.draw(current_game_state["other_player"][3], current_game_state["other_player"][4]) # to be added
 
     pygame.display.flip()
     clock.tick(60)
