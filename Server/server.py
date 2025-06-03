@@ -31,7 +31,7 @@ s.listen(2)
 print("Waiting for a connection...")
 
 game_state = {
-    "players": [(0, 0, 100), (100, 100, 100)], # (x, y, health)
+    "players": [(0, 0, 100, 0, 0), (100, 100, 100, 0, 0)], # (x, y, health)
     "projectiles": []
 }
 
@@ -43,7 +43,7 @@ def threaded_client(conn, player):
         my_player_data = game_state["players"][player]
         other_player_id = 1 - player
 
-        other_player_data = game_state["players"][other_player_id] if 0 <= other_player_id < len(game_state["players"]) else (0,0,100)
+        other_player_data = game_state["players"][other_player_id] if 0 <= other_player_id < len(game_state["players"]) else (0,0,100,0,0)
 
 
         initial_data_for_client = {
@@ -113,10 +113,10 @@ def threaded_client(conn, player):
                     print(f"Shoot command from player {player} missing 'details'.")
 
             elif isinstance(data, (list, tuple)):
-                if len(data) == 3:
+                if len(data) == 5:
                     try:
-                        pos_data = (float(data[0]), float(data[1]), float(data[2]))
-                        game_state["players"][player] = (pos_data[0], pos_data[1], game_state["players"][player][2])
+                        pos_data = (float(data[0]), float(data[1]), float(data[2]), float(data[3]), float(data[4]))
+                        game_state["players"][player] = (pos_data[0], pos_data[1], game_state["players"][player][2], pos_data[3], pos_data[4])
                     except (ValueError, TypeError) as e:
                         print(f"Invalid position data format from player {player}: {data}, error: {e}")
                 else:
@@ -176,7 +176,7 @@ def threaded_client(conn, player):
             if 0 <= other_player_id < len(game_state["players"]):
                 reply_other_player_data = game_state["players"][other_player_id]
             else:
-                reply_other_player_data = (0.0, 0.0, 100.0)
+                reply_other_player_data = (0.0, 0.0, 100.0, 0.0, 0.0)
             
             projectiles_data_for_client = []
             with projectile_lock:

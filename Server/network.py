@@ -38,7 +38,7 @@ class Network:
                 print("Socket is not connected or initial connection failed. Attempting to reconnect...")
                 self.connect()
                 if self.initial_game_state is None:
-                    return {"other_player": (0.0,0.0,100.0), "projectiles": []} 
+                    return {"other_player": (0.0,0.0,100.0,0,0), "projectiles": []} 
             
             self.client.send(str.encode(make_pos(data_to_server)))
             
@@ -48,13 +48,13 @@ class Network:
             
             if not isinstance(game_state_from_server, dict):
                 print(f"Warning: Received data from server is not a dictionary: {game_state_from_server}")
-                return {"other_player": (0.0,0.0,100.0), "projectiles": []}
+                return {"other_player": (0.0,0.0,100.0,0,0), "projectiles": []}
 
             return game_state_from_server
             
         except socket.error as e:
             print(f"Socket error during send/recv: {e}")
-            return {"other_player": (0.0,0.0,100.0), "projectiles": []}
+            return {"other_player": (0.0,0.0,100.0,0,0), "projectiles": []}
         except Exception as e:
             print(f"An unexpected error occurred in send: {e}")
-            return {"other_player": (0.0,0.0,100.0), "projectiles": []}
+            return {"other_player": (0.0,0.0,100.0,0,0), "projectiles": []}

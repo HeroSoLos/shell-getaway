@@ -49,7 +49,7 @@ m_x = 0
 m_y = 0
 # Game loop
 while running:
-    data_to_send = [p.position[0], p.position[1], p.health]
+    data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
 
     m_x, m_y = pygame.mouse.get_pos()
     for event in pygame.event.get():
@@ -91,8 +91,8 @@ while running:
     p.update_position()
 
     if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
-        # data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
-        data_to_send = [p.position[0], p.position[1], p.health]
+        data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
+        # data_to_send = [p.position[0], p.position[1], p.health]
 
     current_game_state = n.send(data_to_send)
 
@@ -120,8 +120,8 @@ while running:
         p.draw(m_x_render, m_y_render)
 
     if p2.health > 0:
-        p2.draw(m_x_render, m_y_render)
-        # p2.draw(current_game_state["other_player"][3], current_game_state["other_player"][4]) # to be added
+        # p2.draw(m_x_render, m_y_render)
+        p2.draw(current_game_state["other_player"][3], current_game_state["other_player"][4]) # to be added
 
     pygame.display.flip()
     clock.tick(60)
