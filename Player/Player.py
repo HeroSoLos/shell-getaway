@@ -69,16 +69,17 @@ class Player:
         pygame.draw.rect(self.screen, (0, 255, 0), health_bar)
             
     """
-    Shoot a bullet in the specified direction.
+    Shoot a projectile towards the given target coordinates.
     Args:
-        direction (list): direction of bullet
+        target_x (int): The x-coordinate of the target.
+        target_y (int): The y-coordinate of the target.
     Precondition: The player has a gun.
-    Postcondition: The player has fired a bullet.
-    Returns: Bullet
+    Postcondition: The gun may have fired a projectile.
+    Returns: A dictionary with projectile details if shot, else None.
     """
-    def shoot(self, y, p2):
+    def shoot(self, target_x, target_y):
         if self.gun:
-            self.gun.shoot(y, p2)
+            return self.gun.shoot(target_x, target_y)
         return None
 
     
