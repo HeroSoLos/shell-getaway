@@ -56,11 +56,12 @@ class Player:
     Postcondition: The player has been drawn on the screen.
     Returns: None
     """
-    def draw(self):
+    def draw(self, m_x, m_y):
         if self.sprite:
             image = pygame.image.load(self.sprite)
             image = pygame.transform.scale(image, (50, 50))
             self.screen.blit(image, (self.rect.x, self.rect.y))
+            self.gun.draw(self.screen, m_x, m_y)
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (self.rect.x, self.rect.y, 50, 50))
             

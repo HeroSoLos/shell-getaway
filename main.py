@@ -14,7 +14,7 @@ running = True
 # Object setup
 n = Network()
 Physics = Physics()
-gun = BaseGun(magazine_size=10, x=0, y=0, bullet_speed=5)
+gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png")
 startPos = tuple(read_pos(n.getPos()))
 p = Player(health=100, move_speed=5, gun=gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
 p.position = startPos
@@ -24,17 +24,17 @@ p.player = p2
 
 # Game loop
 while running:
+    m_x, m_y = pygame.mouse.get_pos()
     # Event handling
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                m_x, m_y = pygame.mouse.get_pos()
                 p.shoot(m_y, p2)
 
     # fill the screen with a color to wipe away anything from last frame
-    screen.fill("black")
+    screen.fill("white")
 
     # Game Rendering
     
@@ -62,6 +62,9 @@ while running:
         direction[0] = .1
     if keys[pygame.K_UP]:
         direction[1] = -.1
+    if keys[pygame.K_r]:
+        p.health = 100
+        p2.health = 100
     p.update_velocity(direction)
     
     
@@ -79,9 +82,9 @@ while running:
     
     # Update
     if p.health > 0:
-        p.draw()
+        p.draw(m_x, m_y)
     if p2.health > 0:
-        p2.draw()
+        p2.draw(m_x, m_y)
     pygame.display.flip()
 
     # Time/FPS control

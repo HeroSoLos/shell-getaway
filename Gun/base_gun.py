@@ -1,3 +1,6 @@
+import pygame
+import pygame.transform
+
 class BaseGun:
     """
     base gun, no specialities
@@ -10,9 +13,9 @@ class BaseGun:
         bullet_speed (float): used to send bullet speed
         damage (int, optional): damage, default 1
     """
-    def __init__(self, magazine_size, x, y, bullet_speed, damage=10):
+    def __init__(self, magazine_size, x, y, sprite, damage=10):
         self.magazine_size = magazine_size
-        self.bullet_speed = bullet_speed
+        self.sprite = sprite
         self.current_bullets = magazine_size 
         self.damage = damage
         self.x = x
@@ -64,6 +67,18 @@ class BaseGun:
         # print(f"Bullet Location: ({p2.position[0]}, {y})")
         # print(f"Player: {p2}")
         
-        
-        
+    def draw(self, screen, m_x, m_y):
+        if self.sprite:
+            if m_x > self.x:
+                image = pygame.image.load(self.sprite)
+                image = pygame.transform.scale(image, (25, 25))
+                screen.blit(image, (self.x+20, self.y+10))
+            else:
+                image = pygame.image.load(self.sprite)
+                image = pygame.transform.scale(image, (25, 25))
+                image = pygame.transform.flip(image, True, False)
+                screen.blit(image, (self.x, self.y+10))
+        else:
+            pygame.draw.rect(screen, (0, 255, 0), (self.x, self.rect.y, 25, 25))
+         
         
