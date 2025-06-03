@@ -15,14 +15,19 @@ class BaseGun:
         damage (int, optional): damage, default 1
         projectile_type (str, optional): type of projectile, default 'standard_bullet'
     """
-    def __init__(self, magazine_size, x, y, sprite, damage=10, projectile_type='standard_bullet'):
+    def __init__(self, magazine_size, x, y, sprite, reload_time, shoot_cooldown, damage=10, projectile_type='standard_bullet'):
         self.magazine_size = magazine_size
         self.sprite = sprite
         self.current_bullets = magazine_size
-        self.damage = damage
         self.x = x
         self.y = y
+        self.reload_time=reload_time
+        self.shoot_cooldown=shoot_cooldown
+        self.damage = damage
         self.projectile_type = projectile_type
+        
+        self.reload_counter = 0
+        self.shoot_cooldown = 0
     
     
     """
@@ -35,9 +40,11 @@ class BaseGun:
     Returns: None
     """
     def update_pos(self, x, y):
-
+        self.reload_counter += 1
+        self.shoot_cooldown += 1
         self.x = x
         self.y = y
+        
 
     """
     Reloads
@@ -59,20 +66,24 @@ class BaseGun:
     Returns: A dictionary containing projectile information if a shot is fired, otherwise None.
     """
     def shoot(self, target_x, target_y):
+        # reload
         if self.current_bullets <= 0:
             self.reload()
+            self.reload_counter = 0
             return None
         
-        self.current_bullets -= 1
-        
-        return {
-            'gun_x': self.x+25,
-            'gun_y': self.y+25,
-            'target_x': target_x,
-            'target_y': target_y,
-            'projectile_type': self.projectile_type,
-            'damage': self.damage
-        }
+        if not (self.reload_counter <= self.reload_time) and not (self.shoot_cooldown <= self.shoot_cooldown):
+            self.shoot_cooldown = 0
+            self.current_bullets -= 1
+            
+            return {
+                'gun_x': self.x+25,
+                'gun_y': self.y+25,
+                'target_x': target_x,
+                'target_y': target_y,
+                'projectile_type': self.projectile_type,
+                'damage': self.damage
+            }
     
     """
     Draw the gun on the screen.

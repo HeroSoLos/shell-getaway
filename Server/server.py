@@ -72,6 +72,7 @@ def threaded_client(conn, player):
                 continue
 
             if isinstance(data, dict) and data.get('action') == 'shoot':
+                print("shoot attempted")
                 details = data.get('details')
                 if details:
                     print(f"Player {player} shoot command: {details}")
@@ -113,6 +114,7 @@ def threaded_client(conn, player):
                     print(f"Shoot command from player {player} missing 'details'.")
 
             elif isinstance(data, (list, tuple)):
+                print("updating info attempted")
                 if len(data) == 5:
                     try:
                         pos_data = (float(data[0]), float(data[1]), float(data[2]), float(data[3]), float(data[4]))
@@ -144,7 +146,7 @@ def threaded_client(conn, player):
                     projectile_damage = proj.damage
 
                     for player_idx, player_data in enumerate(game_state["players"]):
-                        player_pos_x, player_pos_y, player_health = player_data
+                        player_pos_x, player_pos_y, player_health, _m_x, _m_y = player_data
                         
                         player_rect_x_start = player_pos_x
                         player_rect_x_end = player_pos_x + player_width
@@ -160,7 +162,7 @@ def threaded_client(conn, player):
                         if collided:
                             if proj.owner_id != player_idx:
                                 new_health = player_health - projectile_damage
-                                game_state["players"][player_idx] = (player_pos_x, player_pos_y, max(0, new_health))
+                                game_state["players"][player_idx] = (player_pos_x, player_pos_y, max(0, new_health), _m_x, _m_y)
                                 print(f"Player {player_idx} hit by projectile {proj.id}. Health: {new_health}")
                                 if proj not in projectiles_to_remove:
                                     projectiles_to_remove.append(proj)

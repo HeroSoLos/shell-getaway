@@ -35,11 +35,11 @@ else:
     print("Failed to get initial state from server. Using defaults.")
 
 # Player objects
-player_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", projectile_type='standard_bullet')
+player_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
 p = Player(health=my_initial_health, move_speed=5, gun=player_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
 p.position = list(my_initial_pos)
 
-p2_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png")
+p2_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
 p2 = Player(health=other_initial_health, move_speed=5, gun=p2_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
 # p2 = Player(health=other_initial_health, move_speed=5, gun=p2_gun, screen=screen, player=None)
 p2.position = list(other_initial_pos)
