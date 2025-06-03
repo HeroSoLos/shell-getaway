@@ -72,18 +72,18 @@ class BaseGun:
             self.reload_counter = 0
             return None
         
-        if not (self.reload_counter <= self.reload_time) and not (self.shoot_cooldown <= self.shoot_cooldown):
-            self.shoot_cooldown = 0
-            self.current_bullets -= 1
-            
-            return {
-                'gun_x': self.x+25,
-                'gun_y': self.y+25,
-                'target_x': target_x,
-                'target_y': target_y,
-                'projectile_type': self.projectile_type,
-                'damage': self.damage
-            }
+        # if not (self.reload_counter <= self.reload_time) and not (self.shoot_cooldown <= self.shoot_cooldown):
+        self.shoot_cooldown = 0
+        self.current_bullets -= 1
+        
+        return {
+            'gun_x': self.x+25,
+            'gun_y': self.y+25,
+            'target_x': target_x,
+            'target_y': target_y,
+            'projectile_type': self.projectile_type,
+            'damage': self.damage
+        }
     
     """
     Draw the gun on the screen.
