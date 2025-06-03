@@ -60,17 +60,17 @@ class BaseGun:
     def shoot(self, target_x, target_y):
         if self.current_bullets <= 0:
             self.reload()
-            return None  # Or an indicator that no shot was fired
+            return None
         
         self.current_bullets -= 1
         
         return {
-            'gun_x': self.x,
-            'gun_y': self.y,
+            'gun_x': self.x+25,
+            'gun_y': self.y+25,
             'target_x': target_x,
             'target_y': target_y,
             'projectile_type': self.projectile_type,
-            'damage': self.damage  # Assuming damage is tied to the gun/projectile type
+            'damage': self.damage
         }
         
     def draw(self, screen, m_x, m_y):

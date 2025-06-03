@@ -2,10 +2,19 @@ import math
 
 class Physics:
     def __init__(self):
-        self.gravity = 9.81  # m/s^2
-        self.friction_coefficient = 0.6  # Arbitrary value to control friction strength
-        self.velocity_threshold = 0.01  # Minimum velocity before setting it to 0
+        self.gravity = 9.81
+        self.friction_coefficient = 0.6
+        self.velocity_threshold = 0.01
     
+    """
+    Apply friction to objects.
+    Args:
+        obj_list (list): List of objects to apply friction to.
+        delta_time (float): Time step for friction calculation.
+    Precondition: Objects have a velocity attribute.
+    Postcondition: Objects' velocities are reduced by friction.
+    Returns: None
+    """
     def applyFriction(self, obj_list, delta_time=0.016):
         for obj in obj_list:
             if hasattr(obj, 'velocity'):
@@ -24,16 +33,14 @@ class Physics:
                     obj.velocity[1] = 0
 
     """
-    Gives gravity
+    Apply gravity to objects.
     Args:
-        obj_list (list): list of objects to apply gravity to
-        
-    Precondition: The object has a velocity.
-    Postcondition: The object has updated its velocity due to gravity.
+        obj_list (list): List of objects to apply gravity to.
+    Precondition: Objects have a velocity attribute.
+    Postcondition: Objects' velocities are updated due to gravity.
     Returns: None
-    
     """
     def applyGravity(self, obj_list):
         for obj in obj_list:
             if hasattr(obj, 'velocity'):
-                obj.velocity[1] += self.gravity * 0.016  # Assuming 60 FPS, so delta time is 1/60 seconds
+                obj.velocity[1] += self.gravity * 0.016

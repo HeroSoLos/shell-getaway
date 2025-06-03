@@ -1,7 +1,6 @@
 import pygame
 
 class Player:
-    
     """
     Init the player with health, move speed, gun and sprite
     
@@ -20,15 +19,15 @@ class Player:
         self.sprite = sprite
         self.velocity = [0, 0]
         self.position = [0, 0]
-        self.rect = pygame.Rect(0, 0, 50, 50) # x y , width, height
-    
+        self.rect = pygame.Rect(0, 0, 50, 50)
     
     def __repr__(self):
         return f"Player(health={self.health}, move_speed={self.move_speed}, gun={self.gun}, sprite={self.sprite})"
 
     """
-    Update velocity
-    
+    Update velocity.
+    Args:
+        direction (list): Direction vector.
     Precondition: The player has a move speed.
     Postcondition: The player has updated its velocity.
     Returns: None
@@ -38,8 +37,7 @@ class Player:
         self.velocity[1] += direction[1] * self.move_speed
         
     """
-    update position
-    
+    Update position.
     Precondition: The player has a velocity.
     Postcondition: The player has updated its position.
     Returns: None
@@ -51,7 +49,10 @@ class Player:
         self.gun.update_pos(self.position[0], self.position[1])
     
     """
-    Draw the player on the screen
+    Draw the player on the screen.
+    Args:
+        m_x (int): Mouse x-coordinate.
+        m_y (int): Mouse y-coordinate.
     Precondition: The player has a sprite or a default shape.
     Postcondition: The player has been drawn on the screen.
     Returns: None
@@ -82,5 +83,5 @@ class Player:
             return self.gun.shoot(target_x, target_y)
         return None
 
-    
+
 
