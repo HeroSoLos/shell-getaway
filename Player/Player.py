@@ -60,8 +60,8 @@ class Player:
     def draw(self, m_x, m_y):
         if self.sprite:
             image = pygame.image.load(self.sprite)
-            image = pygame.transform.scale(image, (50, 50))
-            self.screen.blit(image, (self.rect.x, self.rect.y))
+            image = pygame.transform.scale(image, (100, 100))
+            self.screen.blit(image, (self.rect.x-25, self.rect.y-25))
             self.gun.draw(self.screen, m_x, m_y)
         else:
             pygame.draw.rect(self.screen, (255, 0, 0), (self.rect.x, self.rect.y, 50, 50))
