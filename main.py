@@ -9,7 +9,7 @@ from Gun.projectile import Projectile
 
 # pygame setup
 pygame.init()
-screen = pygame.display.set_mode((600, 300))
+screen = pygame.display.set_mode((900, 600))
 camera_offset_x = 0
 camera_offset_y = 0
 screen_width = screen.get_width()
