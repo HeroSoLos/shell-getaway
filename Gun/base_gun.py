@@ -77,7 +77,7 @@ class BaseGun:
     Postcondition: If bullets are available, current bullets are decremented.
     Returns: A dictionary containing projectile information if a shot is fired, otherwise None.
     """
-    def shoot(self, player, target_x, target_y):
+    def shoot(self, player, target_x, target_y, click_type):
         # reload
         if self.current_bullets <= 0:
             self.reload()
