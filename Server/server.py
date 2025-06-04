@@ -128,7 +128,7 @@ def threaded_client(conn, player_id):
                             game_state["projectiles"].append(new_projectile)
                         print(f"Created projectile {proj_id} for player {player_id}")
                     else:
-                        print(f"Missing details in shoot command from player {player}")
+                        print(f"Missing details in shoot command from player {player_id}")
                 else:
                     print(f"Shoot command from player {player_id} missing 'details'.")
 
@@ -160,8 +160,8 @@ def threaded_client(conn, player_id):
                 proj.update()
                 screen_width = 600 
                 screen_height = 300
-                if not (-50 < proj.position[0] < screen_width + 50 and \
-                        -50 < proj.position[1] < screen_height + 50):
+                if not (-3000 < proj.position[0] < 3000 and \
+                        -3000 < proj.position[1] < 3000):
                     if proj not in projectiles_to_remove:
                         projectiles_to_remove.append(proj)
                     print(f"Projectile {proj.id} removed due to boundary.")

@@ -105,10 +105,10 @@ class BaseGun:
     Postcondition: The gun has been drawn on the screen.
     Returns: None
     """
-    def draw(self, screen, m_x, m_y):
+    def draw(self, screen, m_x, m_y, camera_offset_x=0, camera_offset_y=0):
         if self.loaded_gun_image:
-            gun_pivot_x = self.x + 25
-            gun_pivot_y = self.y + 25
+            gun_pivot_x = self.x + 25 - camera_offset_x
+            gun_pivot_y = self.y + 25 - camera_offset_y
             
             angle_rad = math.atan2(m_y - gun_pivot_y, m_x - gun_pivot_x)
             angle_deg = math.degrees(angle_rad)
@@ -123,6 +123,4 @@ class BaseGun:
                 new_rect = rotated_image.get_rect(center=(gun_pivot_x + offset_distance, gun_pivot_y))
             screen.blit(rotated_image, new_rect.topleft)
         else:
-            pygame.draw.rect(screen, (0, 255, 0), (self.x, self.y+15, 50, 20)) #looked ugly so changed
-         
-        
+            pygame.draw.rect(screen, (0, 255, 0), (self.x - camera_offset_x, self.y + 15 - camera_offset_y, 50, 20))

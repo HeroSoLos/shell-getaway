@@ -66,29 +66,38 @@ class Player:
     Args:
         m_x (int): Mouse x-coordinate.
         m_y (int): Mouse y-coordinate.
+        camera_offset_x (int, optional): Camera x offset for scrolling
+        camera_offset_y (int, optional): Camera y offset for scrolling
     Precondition: The player has a sprite or a default shape.
     Postcondition: The player has been drawn on the screen.
     Returns: None
     """
-    def draw(self, m_x, m_y):
+    def draw(self, m_x, m_y, camera_offset_x=0, camera_offset_y=0):
+        m_x_screen = m_x - camera_offset_x
+        m_y_screen = m_y - camera_offset_y
+
         if self.loaded_sprite_image:
-            self.screen.blit(self.loaded_sprite_image, (self.rect.x - 25, self.rect.y - 25))
+            self.screen.blit(self.loaded_sprite_image, (self.rect.x - 25 - camera_offset_x, self.rect.y - 25 - camera_offset_y))
         else:
-            pygame.draw.rect(self.screen, (255, 0, 0), self.rect)
+            pygame.draw.rect(self.screen, (255, 0, 0), (self.rect.x - camera_offset_x, self.rect.y - camera_offset_y, self.rect.width, self.rect.height))
 
         if self.gun:
-            self.gun.update_pos(self.rect.x, self.rect.y) 
-            self.gun.draw(self.screen, m_x, m_y)
+            self.gun.update_pos(self.rect.x, self.rect.y)
+            self.gun.draw(self.screen, m_x_screen, m_y_screen, camera_offset_x, camera_offset_y)
         
         if self.health > 0:
             health_bar_width = self.rect.width * (self.health / 100)
             health_bar_width = max(0, health_bar_width) 
             health_bar_height = 5
-            health_bar = pygame.Rect(self.rect.x, self.rect.y - 10, health_bar_width, health_bar_height)
-            pygame.draw.rect(self.screen, (0, 255, 0), health_bar)
+            health_bar_rect_screen = pygame.Rect(
+                self.rect.x - camera_offset_x, 
+                self.rect.y - 10 - camera_offset_y, 
+                health_bar_width, 
+                health_bar_height
+            )
+            pygame.draw.rect(self.screen, (0, 255, 0), health_bar_rect_screen)
             
     """
-    Shoot a projectile towards the given target coordinates.
     Args:
         target_x (int): The x-coordinate of the target.
         target_y (int): The y-coordinate of the target.

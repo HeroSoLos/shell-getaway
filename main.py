@@ -10,6 +10,10 @@ from Gun.projectile import Projectile
 # pygame setup
 pygame.init()
 screen = pygame.display.set_mode((600, 300))
+camera_offset_x = 0
+camera_offset_y = 0
+screen_width = screen.get_width()
+screen_height = screen.get_height()
 clock = pygame.time.Clock()
 running = True
 
@@ -57,7 +61,9 @@ else:
 m_x, m_y = 0, 0
 # Game loop
 while running:
-    m_x, m_y = pygame.mouse.get_pos()
+    m_x_screen, m_y_screen = pygame.mouse.get_pos()
+    m_x = m_x_screen + camera_offset_x
+    m_y = m_y_screen + camera_offset_y
     data_to_send = None
 
     if local_player:
@@ -74,17 +80,17 @@ while running:
 
     # move and collosion stuff
     if local_player:
-        if local_player.position[1] < 0:
-            local_player.position = (local_player.position[0], 0)
+        if local_player.position[1] < -3000:
+            local_player.position = (local_player.position[0], -3000)
             local_player.velocity[1] = 0
-        if local_player.position[1] > screen.get_height() - 50:
-            local_player.position = (local_player.position[0], screen.get_height() - 50)
+        if local_player.position[1] > 3000 - 50:
+            local_player.position = (local_player.position[0], 3000 - 50)
             local_player.velocity[1] = 0
-        if local_player.position[0] < 0:
-            local_player.position = (0, local_player.position[1])
+        if local_player.position[0] < -3000:
+            local_player.position = (-3000, local_player.position[1])
             local_player.velocity[0] = 0
-        if local_player.position[0] > screen.get_width() - 50:
-            local_player.position = (screen.get_width() - 50, local_player.position[1])
+        if local_player.position[0] > 3000 - 50:
+            local_player.position = (3000 - 50, local_player.position[1])
             local_player.velocity[0] = 0
 
         keys = pygame.key.get_pressed()
@@ -95,11 +101,18 @@ while running:
             direction[0] = .1
         if keys[pygame.K_UP]:
             direction[1] = -.1
+        if keys[pygame.K_DOWN]:
+            direction[1] = .1
         local_player.update_velocity(direction)
-
-        Physics.applyGravity([local_player])
+        
+        Physics.applyFriction(local_player)
+        # Physics.applyGravity([local_player])
         local_player.update_position()
 
+        if local_player:
+            camera_offset_x = local_player.position[0] - screen_width / 2
+            camera_offset_y = local_player.position[1] - screen_height / 2
+        
         if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
             data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
 
@@ -141,20 +154,57 @@ while running:
         if "projectiles" in current_game_state:
             for proj_data in current_game_state["projectiles"]:
                 if len(proj_data) == 7: # id, x, y, vx, vy, type, owner_id
-                    Projectile.draw(screen, pygame, proj_data[1], proj_data[2], proj_data[3], proj_data[4], proj_data[5])
+                    Projectile.draw(screen, pygame, proj_data[1] - camera_offset_x, proj_data[2] - camera_offset_y, proj_data[3], proj_data[4], proj_data[5])
     else:
         screen.fill("white")
 
     for pid_draw, p_obj_draw in player_objects.items():
         if p_obj_draw.health > 0:
             if pid_draw == my_player_id:
-                p_obj_draw.draw(m_x, m_y) 
+                p_obj_draw.draw(m_x, m_y, camera_offset_x, camera_offset_y) 
             else:
                 remote_player_server_data = server_other_players_data.get(pid_draw)
                 if remote_player_server_data and len(remote_player_server_data) >= 5:
-                    p_obj_draw.draw(remote_player_server_data[3], remote_player_server_data[4])
+                    p_obj_draw.draw(remote_player_server_data[3] + camera_offset_x, remote_player_server_data[4] + camera_offset_y, camera_offset_x, camera_offset_y)
                 else:
-                    p_obj_draw.draw(int(p_obj_draw.rect.centerx), int(p_obj_draw.rect.centery - 20))
+                    p_obj_draw.draw(int(p_obj_draw.rect.centerx), int(p_obj_draw.rect.centery - 20), camera_offset_x, camera_offset_y)
+    
+    if local_player:
+        arrow_margin = 20
+        arrow_points_template = [(0, 0), (-15, -7), (-15, 7)]
+
+        local_player_screen_center_x = screen_width / 2
+        local_player_screen_center_y = screen_height / 2
+
+        for pid_other, p_obj_other in player_objects.items():
+            if pid_other == my_player_id or p_obj_other.health <= 0:
+                continue
+
+            other_world_x = p_obj_other.position[0] + p_obj_other.rect.width / 2
+            other_world_y = p_obj_other.position[1] + p_obj_other.rect.height / 2
+            
+            other_screen_x = other_world_x - camera_offset_x
+            other_screen_y = other_world_y - camera_offset_y
+
+            is_off_screen = not (0 <= other_screen_x < screen_width and 0 <= other_screen_y < screen_height)
+
+            if is_off_screen:
+                angle_rad = math.atan2(other_screen_y - local_player_screen_center_y, other_screen_x - local_player_screen_center_x)
+                edge_distance = min(local_player_screen_center_x, local_player_screen_center_y) - arrow_margin
+                
+                arrow_base_x = local_player_screen_center_x + math.cos(angle_rad) * edge_distance
+                arrow_base_y = local_player_screen_center_y + math.sin(angle_rad) * edge_distance
+
+                arrow_base_x = max(arrow_margin, min(arrow_base_x, screen_width - arrow_margin))
+                arrow_base_y = max(arrow_margin, min(arrow_base_y, screen_height - arrow_margin))
+
+                rotated_points = []
+                for x_tpl, y_tpl in arrow_points_template:
+                    rot_x = x_tpl * math.cos(angle_rad) - y_tpl * math.sin(angle_rad)
+                    rot_y = x_tpl * math.sin(angle_rad) + y_tpl * math.cos(angle_rad)
+                    rotated_points.append((rot_x + arrow_base_x, rot_y + arrow_base_y))
+                
+                pygame.draw.polygon(screen, (255, 100, 0), rotated_points)
     
     pygame.display.flip()
     clock.tick(60)

@@ -15,22 +15,30 @@ class Physics:
     Postcondition: Objects' velocities are reduced by friction.
     Returns: None
     """
-    def applyFriction(self, obj_list, delta_time=0.016):
-        for obj in obj_list:
-            if hasattr(obj, 'velocity'):
-                if obj.velocity[0] > 0:
-                    obj.velocity[0] -= self.friction_coefficient * delta_time
-                    if obj.velocity[0] < 0:
-                        obj.velocity[0] = 0
-                elif obj.velocity[0] < 0:
-                    obj.velocity[0] += self.friction_coefficient * delta_time
-                    if obj.velocity[0] > 0:
-                        obj.velocity[0] = 0
+    def applyFriction(self, player, delta_time=0.016):
+        if hasattr(player, 'velocity'):
+            if player.velocity[0] > 0:
+                player.velocity[0] -= self.friction_coefficient * delta_time
+                if player.velocity[0] < 0:
+                    player.velocity[0] = 0
+            elif player.velocity[0] < 0:
+                player.velocity[0] += self.friction_coefficient * delta_time
+                if player.velocity[0] > 0:
+                    player.velocity[0] = 0
+                    
+            if player.velocity[1] > 0:
+                player.velocity[1] -= self.friction_coefficient * delta_time
+                if player.velocity[1] < 0:
+                    player.velocity[1] = 0
+            elif player.velocity[1] < 0:
+                player.velocity[1] += self.friction_coefficient * delta_time
+                if player.velocity[1] > 0:
+                    player.velocity[1] = 0
 
-                if abs(obj.velocity[0]) < self.velocity_threshold:
-                    obj.velocity[0] = 0
-                if abs(obj.velocity[1]) < self.velocity_threshold:
-                    obj.velocity[1] = 0
+            if abs(player.velocity[0]) < self.velocity_threshold:
+                player.velocity[0] = 0
+            if abs(player.velocity[1]) < self.velocity_threshold:
+                player.velocity[1] = 0
 
     """
     Apply gravity to objects.
