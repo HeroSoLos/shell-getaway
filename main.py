@@ -165,7 +165,7 @@ while running:
             else:
                 remote_player_server_data = server_other_players_data.get(pid_draw)
                 if remote_player_server_data and len(remote_player_server_data) >= 5:
-                    p_obj_draw.draw(remote_player_server_data[3] + camera_offset_x, remote_player_server_data[4] + camera_offset_y, camera_offset_x, camera_offset_y)
+                    p_obj_draw.draw(remote_player_server_data[3], remote_player_server_data[4], camera_offset_x, camera_offset_y)
                 else:
                     p_obj_draw.draw(int(p_obj_draw.rect.centerx), int(p_obj_draw.rect.centery - 20), camera_offset_x, camera_offset_y)
     
