@@ -9,6 +9,7 @@ from Gun.projectile import Projectile
 
 # pygame setup
 pygame.init()
+kill_streak_font = pygame.font.SysFont(None, 30)
 screen = pygame.display.set_mode((900, 600))
 camera_offset_x = 0
 camera_offset_y = 0
@@ -26,6 +27,7 @@ initial_state = n.get_initial_state()
 my_player_id = None
 player_objects = {}
 local_player = None
+current_all_player_streaks = {}
 
 if initial_state and "my_id" in initial_state:
     my_player_id = initial_state["my_id"]
@@ -106,6 +108,7 @@ while running:
         local_player.update_velocity(direction)
         
         Physics.applyFriction(local_player)
+        Physics.capVelocity(local_player)
         # Physics.applyGravity([local_player])
         local_player.update_position()
 
@@ -117,10 +120,37 @@ while running:
             data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
 
     current_game_state = n.send(data_to_send)
-    print(current_game_state)
+    # print(current_game_state)
     if current_game_state:
-        if local_player and "my_player_updated_health" in current_game_state:
-            local_player.health = current_game_state["my_player_updated_health"]
+        current_all_player_streaks = current_game_state.get("all_kill_streaks", {})
+        if local_player:
+            if "my_player_updated_health" in current_game_state:
+                local_player.health = current_game_state["my_player_updated_health"]
+            if my_player_id is not None:
+                local_player.kill_streak = current_all_player_streaks.get(str(my_player_id), 0)
+            
+            my_event = current_game_state.get("event_for_me")
+            # if my_event is not None:
+                # print(f"DEBUG CLIENT: Received event_for_me = {my_event}", file=sys.stderr)
+
+            if my_event and isinstance(my_event, dict):
+                event_type = my_event.get("type")
+                if event_type == "respawn":
+                    new_pos = my_event.get("pos")
+                    if isinstance(new_pos, (list, tuple)) and len(new_pos) == 2:
+                        local_player.position[0] = new_pos[0]
+                        local_player.position[1] = new_pos[1]
+                        local_player.rect.x = local_player.position[0]
+                        local_player.rect.y = local_player.position[1]
+                        local_player.health = 100 # Ensure health is full on respawn
+                        print(f"Local player respawn event processed. New position: {local_player.position}")
+                else:
+                    pass
+                    # print(f"DEBUG CLIENT: Received event_for_me of unexpected type or structure: {my_event}", file=sys.stderr)
+            elif my_event is not None: # It was not None, but not a dict, or type was missing
+                pass
+                # print(f"DEBUG CLIENT: Received event_for_me with unexpected structure (not a dict or type missing): {my_event}", file=sys.stderr)
+
 
         server_other_players_data = current_game_state.get("other_players", {})
         # print(server_other_players_data) #######################
@@ -168,7 +198,16 @@ while running:
                     p_obj_draw.draw(remote_player_server_data[3], remote_player_server_data[4], camera_offset_x, camera_offset_y)
                 else:
                     p_obj_draw.draw(int(p_obj_draw.rect.centerx), int(p_obj_draw.rect.centery - 20), camera_offset_x, camera_offset_y)
-    
+            
+            player_id_for_streak = pid_draw
+            streak_count = current_all_player_streaks.get(str(player_id_for_streak), 0)
+            streak_text_content = f"Kills:{streak_count}"
+            text_render_surface = kill_streak_font.render(streak_text_content, True, (0, 0, 0))
+            
+            text_rect = text_render_surface.get_rect(centerx=p_obj_draw.rect.centerx - camera_offset_x, 
+                                                     top=p_obj_draw.rect.y + 75 - camera_offset_y + 5)
+            screen.blit(text_render_surface, text_rect)
+
     if local_player:
         arrow_margin = 20
         arrow_points_template = [(0, 0), (-15, -7), (-15, 7)]

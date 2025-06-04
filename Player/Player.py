@@ -22,6 +22,7 @@ class Player:
         self.velocity = [0, 0]
         self.position = [0, 0]
         self.rect = pygame.Rect(0, 0, 50, 50)
+        self.kill_streak = 0
         
         self.loaded_sprite_image = None
         if sprite:
@@ -56,7 +57,7 @@ class Player:
     Returns: None
     """
     def update_position(self):
-        self.position = (self.position[0]+self.velocity[0], self.position[1]+self.velocity[1])
+        self.position = [self.position[0]+self.velocity[0], self.position[1]+self.velocity[1]]
         self.rect.x = self.position[0]
         self.rect.y = self.position[1]
         self.gun.update_pos(self.rect.x, self.rect.y)

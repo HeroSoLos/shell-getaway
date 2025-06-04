@@ -13,6 +13,7 @@ from config import SERVER_IP
 from Gun.projectile import Projectile
 import math
 import threading
+import random
 
 
 server = SERVER_IP
@@ -40,7 +41,8 @@ print("Waiting for a connection...", file=sys.stderr)
 game_state = {
     # "players": [(0, 0, 100, 0, 0), (100, 100, 100, 0, 0)], # (x, y, health)
     "players": {},
-    "projectiles": []
+    "projectiles": [],
+    "kill_streaks": {}
 }
 
 next_projectile_id = 0 
@@ -66,7 +68,8 @@ def threaded_client(conn, player_id):
             "my_id": player_id,
             "my_player": my_player_data,
             "other_players": other_players_initial_data,
-            "projectiles": []
+            "projectiles": [],
+            "all_kill_streaks": game_state["kill_streaks"].copy()
         }
         conn.send(str.encode(make_pos(initial_data_for_client)))
     
@@ -76,6 +79,7 @@ def threaded_client(conn, player_id):
         return
     
     while True:
+        respawn_events_this_tick = {}
         try:
             raw_data = conn.recv(2048).decode("utf-8")
             if not raw_data:
@@ -193,8 +197,27 @@ def threaded_client(conn, player_id):
                         if collided:
                             if proj.owner_id != p_id_collision:
                                 new_health = player_health - projectile_damage
-                                game_state["players"][p_id_collision] = (player_pos_x, player_pos_y, max(0, new_health), _m_x, _m_y)
-                                print(f"Player {p_id_collision} hit by projectile {proj.id}. Health: {new_health}")
+                                if new_health <= 0:
+                                    killer_id = proj.owner_id
+                                    killed_id = p_id_collision
+                                    
+                                    game_state["players"][killed_id] = (player_pos_x, player_pos_y, 100, _m_x, _m_y)
+
+                                    if killer_id != killed_id: # No self-kill streak
+                                        game_state["kill_streaks"][killer_id] = game_state["kill_streaks"].get(killer_id, 0) + 1
+                                    
+                                    game_state["kill_streaks"][killed_id] = 0
+
+                                    new_x_respawn = random.uniform(-2000, 2000)
+                                    new_y_respawn = random.uniform(-2000, 2000)
+                                    # print(f"DEBUG SERVER: Player {killed_id} died. Generated respawn coords: ({new_x_respawn}, {new_y_respawn}). Storing for respawn event.", file=sys.stderr)
+                                    respawn_events_this_tick[killed_id] = [new_x_respawn, new_y_respawn]
+                                    
+                                    print(f"Player {killed_id} killed by {killer_id}. Health set to 100. Respawn event generated for ({new_x_respawn}, {new_y_respawn}).")
+                                else:
+                                    game_state["players"][p_id_collision] = (player_pos_x, player_pos_y, new_health, _m_x, _m_y)
+                                    print(f"Player {p_id_collision} hit by projectile {proj.id}. Health: {new_health}")
+                                
                                 if proj not in projectiles_to_remove:
                                     projectiles_to_remove.append(proj)
             with projectile_lock:    
@@ -232,9 +255,22 @@ def threaded_client(conn, player_id):
                 "my_id": player_id,
                 "my_player_updated_health": my_current_health,
                 "other_players": other_players_update_data,
-                "projectiles": projectiles_data_for_client
+                "projectiles": projectiles_data_for_client,
+                "all_kill_streaks": game_state["kill_streaks"].copy(),
+                "event_for_me": None
             }
-            print(f"Player {player_id} state update. Sending my_health: {my_current_health}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}")
+
+            my_event_data_for_packet = respawn_events_this_tick.get(player_id)
+            if my_event_data_for_packet is not None:
+                data_to_send_client["event_for_me"] = {
+                    "type": "respawn",
+                    "pos": my_event_data_for_packet
+                }
+                # print(f"DEBUG SERVER: Sending 'event_for_me' to player {player_id}: {{'type': 'respawn', 'pos': {my_event_data_for_packet}}}", file=sys.stderr)
+                print(f"Player {player_id} has a respawn event: {data_to_send_client['event_for_me']}")
+            
+            current_streaks_for_log = data_to_send_client['all_kill_streaks']
+            print(f"Player {player_id} state update. Sending my_health: {my_current_health}, all_kill_streaks: {current_streaks_for_log}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}, event: {data_to_send_client['event_for_me']}")
             conn.sendall(str.encode(make_pos(data_to_send_client)))
 
         except socket.error as e:
@@ -252,6 +288,9 @@ def threaded_client(conn, player_id):
         if player_id in game_state["players"]:
             del game_state["players"][player_id]
             print(f"Player {player_id} removed from game_state. Total players: {len(game_state['players'])}")
+        if player_id in game_state["kill_streaks"]:
+            del game_state["kill_streaks"][player_id]
+            print(f"Kill streak data for player {player_id} removed.")
     conn.close()
 
 while True:
@@ -266,6 +305,7 @@ while True:
     initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y = 50, 50, 100, 0, 0
     with game_state_lock:
         game_state["players"][current_id] = (initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y)
-        print(f"Player {current_id} connected. Total players: {len(game_state['players'])}")
+        game_state["kill_streaks"][current_id] = 0
+        print(f"Player {current_id} connected. Total players: {len(game_state['players'])}. Kill streak initialized.")
 
     start_new_thread(threaded_client, (conn, current_id))

@@ -52,3 +52,23 @@ class Physics:
         for obj in obj_list:
             if hasattr(obj, 'velocity'):
                 obj.velocity[1] += self.gravity * 0.016
+                
+    """
+    Caps velocity
+    Args:
+        p: player to cap velocity
+    precondition: there is a player with velocity
+    postcondition: velocity doesn't exceed limit
+    """
+    def capVelocity(self, p):
+        if hasattr(p, 'velocity'):
+            if p.velocity[0] < -100:
+                p.velocity[0] = -100
+            elif p.velocity[0] > 100:
+                p.velocity[0] = 100
+            
+            if p.velocity[1] < -100:
+                p.velocity[1] = -100
+            elif p.velocity[1] > 100:
+                p.velocity[1] = 100
+            
