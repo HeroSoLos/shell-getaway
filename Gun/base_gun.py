@@ -116,6 +116,10 @@ class BaseGun:
             angle_deg = math.degrees(angle_rad)
             
             scaled_image = pygame.transform.scale(self.loaded_gun_image, (50, 50)) 
+            
+            if m_x < gun_pivot_x:
+                scaled_image = pygame.transform.flip(scaled_image, False, True)
+
             rotated_image = pygame.transform.rotate(scaled_image, -angle_deg)
             
             offset_distance = 15 

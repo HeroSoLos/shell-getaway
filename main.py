@@ -7,14 +7,29 @@ from Server.utils import *
 from Server.network import *
 from Gun.projectile import Projectile
 from Gun.compressor import Compressor
+import sys
 # pygame setup
 pygame.init()
 kill_streak_font = pygame.font.SysFont(None, 30)
+sky_image_original = pygame.image.load("assets/Sky.png")
 screen = pygame.display.set_mode((900, 600))
 camera_offset_x = 0
 camera_offset_y = 0
 screen_width = screen.get_width()
 screen_height = screen.get_height()
+
+# bg move stuff
+sky_rect_original = sky_image_original.get_rect()
+sky_image = sky_image_original
+if sky_rect_original.height > 0:
+    scale_ratio = screen_height / sky_rect_original.height
+    scaled_sky_width = int(sky_rect_original.width * scale_ratio)
+    sky_image = pygame.transform.scale(sky_image_original, (scaled_sky_width, screen_height))
+else:
+    print("Error: Original sky image height is zero. Cannot scale.", file=sys.stderr)
+
+sky_rect = sky_image.get_rect()
+
 clock = pygame.time.Clock()
 running = True
 
@@ -132,11 +147,8 @@ while running:
             direction[1] = -.1
         if keys[pygame.K_DOWN]:
             direction[1] = .1
-        if keys[pygame.K_q]: # This was for testing compressor directly, might be removed or kept.
-            # If kept, it should use the active gun if compressor is selected.
-            # For now, assuming it's for testing and might not align with new weapon switching.
-            # local_player.gun.shoot(local_player, m_x, m_y) # This would use the active gun
-            pass # Decided to comment out direct compressor test via Q for now.
+        if keys[pygame.K_q]:
+            pass
         local_player.update_velocity(direction)
         
         Physics.applyFriction(local_player)
@@ -210,7 +222,7 @@ while running:
                         player_to_update.switch_weapon(0)
                     elif player_to_update.secondary_gun and active_weapon_id_from_server == player_to_update.secondary_gun.weapon_type_id:
                         player_to_update.switch_weapon(1)
-            else: # New player
+            else:
                 new_player_primary_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet', weapon_type_id="sniper")
                 new_player_secondary_gun = Compressor(10, 0, 0, sprite="assets/RPG.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='compressor_shot', weapon_type_id="compressor")
                 new_p_obj = Player(health=p_data_server[2], 
@@ -233,12 +245,33 @@ while running:
                         new_p_obj.switch_weapon(1)
         
         screen.fill("white")
+
+        #bg
+        if sky_rect.width > 0 and sky_rect.height > 0:
+            scroll_x = camera_offset_x % sky_rect.width
+            scroll_y = camera_offset_y % sky_rect.height
+            screen.blit(sky_image, (-scroll_x, -scroll_y))
+            screen.blit(sky_image, (-scroll_x + sky_rect.width, -scroll_y))
+            screen.blit(sky_image, (-scroll_x, -scroll_y + sky_rect.height))
+            screen.blit(sky_image, (-scroll_x + sky_rect.width, -scroll_y + sky_rect.height))
+        else:
+            print("Error: Scaled sky image dimensions are invalid. Cannot draw background.", file=sys.stderr)
+
         if "projectiles" in current_game_state:
             for proj_data in current_game_state["projectiles"]:
                 if len(proj_data) == 7: # id, x, y, vx, vy, type, owner_id
                     Projectile.draw(screen, pygame, proj_data[1] - camera_offset_x, proj_data[2] - camera_offset_y, proj_data[3], proj_data[4], proj_data[5])
     else:
         screen.fill("white")
+        if sky_rect.width > 0 and sky_rect.height > 0:
+            scroll_x = camera_offset_x % sky_rect.width
+            scroll_y = camera_offset_y % sky_rect.height
+            screen.blit(sky_image, (-scroll_x, -scroll_y))
+            screen.blit(sky_image, (-scroll_x + sky_rect.width, -scroll_y))
+            screen.blit(sky_image, (-scroll_x, -scroll_y + sky_rect.height))
+            screen.blit(sky_image, (-scroll_x + sky_rect.width, -scroll_y + sky_rect.height))
+        else:
+            print("Error: Scaled sky image dimensions are invalid. Cannot draw background (in else block).", file=sys.stderr)
 
     for pid_draw, p_obj_draw in player_objects.items():
         if p_obj_draw.health > 0:
