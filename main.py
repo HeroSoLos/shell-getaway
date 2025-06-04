@@ -19,110 +19,143 @@ Physics = Physics()
 
 # Initial player setup using data from server
 initial_state = n.get_initial_state()
-my_initial_pos = (50, 50)
-my_initial_health = 100
-other_initial_pos = (100, 100)
-other_initial_health = 100
+my_player_id = None
+player_objects = {}
+local_player = None
 
-if initial_state:
-    if "my_player" in initial_state and initial_state["my_player"]:
-        my_initial_pos = initial_state["my_player"][:2]
-        my_initial_health = initial_state["my_player"][2]
-    if "other_player" in initial_state and initial_state["other_player"]:
-        other_initial_pos = initial_state["other_player"][:2]
-        other_initial_health = initial_state["other_player"][2]
+if initial_state and "my_id" in initial_state:
+    my_player_id = initial_state["my_id"]
+    my_data = initial_state.get("my_player")
+    if my_data:
+        player_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
+        p_obj = Player(health=my_data[2], move_speed=5, gun=player_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+        p_obj.position = list(my_data[:2])
+        p_obj.rect.topleft = tuple(p_obj.position)
+        player_objects[my_player_id] = p_obj
+        print(f"Local player {my_player_id} created. Pos: {p_obj.position}, Health: {p_obj.health}")
+
+
+    if "other_players" in initial_state:
+        for other_id, other_data in initial_state["other_players"].items():
+            if other_id == my_player_id: continue # temp fix
+            other_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
+            op_obj = Player(health=other_data[2], move_speed=5, gun=other_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+            op_obj.position = list(other_data[:2])
+            op_obj.rect.topleft = tuple(op_obj.position)
+            player_objects[other_id] = op_obj
+            print(f"Initial other player {other_id} created. Pos: {op_obj.position}, Health: {op_obj.health}")
 else:
-    print("Failed to get initial state from server. Using defaults.")
+    print("Failed to get initial state or player ID from server. Exiting.")
+    running = False
 
-# Player objects
-player_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
-p = Player(health=my_initial_health, move_speed=5, gun=player_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
-p.position = list(my_initial_pos)
+if my_player_id is not None and my_player_id in player_objects:
+    local_player = player_objects[my_player_id]
+else:
+    print("Local player object could not be initialized. Exiting.")
+    running = False
 
-p2_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
-p2 = Player(health=other_initial_health, move_speed=5, gun=p2_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
-# p2 = Player(health=other_initial_health, move_speed=5, gun=p2_gun, screen=screen, player=None)
-p2.position = list(other_initial_pos)
-p.player = p2
-
-m_x = 0
-m_y = 0
+m_x, m_y = 0, 0
 # Game loop
 while running:
-    data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
-
     m_x, m_y = pygame.mouse.get_pos()
+    data_to_send = None
+
+    if local_player:
+        data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
+        if event.type == pygame.MOUSEBUTTONDOWN and local_player:
             if event.button == 1:
-                shoot_command_details = p.shoot(m_x, m_y)
+                shoot_command_details = local_player.shoot(m_x, m_y)
                 if shoot_command_details:
                     data_to_send = {"action": "shoot", "details": shoot_command_details}
 
-    screen.fill("white")
+    # move and collosion stuff
+    if local_player:
+        if local_player.position[1] < 0:
+            local_player.position = (local_player.position[0], 0)
+            local_player.velocity[1] = 0
+        if local_player.position[1] > screen.get_height() - 50:
+            local_player.position = (local_player.position[0], screen.get_height() - 50)
+            local_player.velocity[1] = 0
+        if local_player.position[0] < 0:
+            local_player.position = (0, local_player.position[1])
+            local_player.velocity[0] = 0
+        if local_player.position[0] > screen.get_width() - 50:
+            local_player.position = (screen.get_width() - 50, local_player.position[1])
+            local_player.velocity[0] = 0
 
-    # Borders Collisions
-    if p.position[1] < 0:
-        p.position = (p.position[0], 0)
-        p.velocity[1] = 0
-    if p.position[1] > screen.get_height() - 50:
-        p.position = (p.position[0], screen.get_height() - 50)
-        p.velocity[1] = 0
-    if p.position[0] < 0:
-        p.position = (0, p.position[1])
-        p.velocity[0] = 0
-    if p.position[0] > screen.get_width() - 50:
-        p.position = (screen.get_width() - 50, p.position[1])
-        p.velocity[0] = 0
+        keys = pygame.key.get_pressed()
+        direction = [0, 0]
+        if keys[pygame.K_LEFT]:
+            direction[0] = -.1
+        if keys[pygame.K_RIGHT]:
+            direction[0] = .1
+        if keys[pygame.K_UP]:
+            direction[1] = -.1
+        local_player.update_velocity(direction)
 
-    keys = pygame.key.get_pressed()
-    direction = [0, 0]
-    if keys[pygame.K_LEFT]:
-        direction[0] = -.1
-    if keys[pygame.K_RIGHT]:
-        direction[0] = .1
-    if keys[pygame.K_UP]:
-        direction[1] = -.1
-    p.update_velocity(direction)
+        Physics.applyGravity([local_player])
+        local_player.update_position()
 
-    Physics.applyGravity([p])
-    p.update_position()
-
-    if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
-        data_to_send = [p.position[0], p.position[1], p.health, m_x, m_y]
-        # data_to_send = [p.position[0], p.position[1], p.health]
+        if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
+            data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
 
     current_game_state = n.send(data_to_send)
-
+    print(current_game_state)
     if current_game_state:
-        if "my_player_updated_health" in current_game_state:
-            p.health = current_game_state["my_player_updated_health"]
+        if local_player and "my_player_updated_health" in current_game_state:
+            local_player.health = current_game_state["my_player_updated_health"]
 
-        if "other_player" in current_game_state and current_game_state["other_player"]:
-            p2_server_data = current_game_state["other_player"]
-            p2.position[0] = p2_server_data[0]
-            p2.position[1] = p2_server_data[1]
-            p2.health = p2_server_data[2]
-            p2.rect.topleft = (p2.position[0], p2.position[1])
-            p2.gun.update_pos(p2.rect.x, p2.rect.y)
+        server_other_players_data = current_game_state.get("other_players", {})
+        # print(server_other_players_data) #######################
+        current_client_other_player_ids = {pid for pid in player_objects.keys() if pid != my_player_id}
+        server_player_ids = set(server_other_players_data.keys())
 
+        for pid_to_remove in current_client_other_player_ids - server_player_ids:
+            if pid_to_remove in player_objects:
+                del player_objects[pid_to_remove]
+                print(f"Removed player {pid_to_remove}")
+
+        for pid_server, p_data_server in server_other_players_data.items():
+            if pid_server == my_player_id:
+                continue
+            
+            if pid_server in player_objects: 
+                player_to_update = player_objects[pid_server]
+                player_to_update.position = list(p_data_server[:2])
+                player_to_update.health = p_data_server[2]
+                player_to_update.rect.topleft = tuple(player_to_update.position)
+            else:
+                new_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
+                new_p_obj = Player(health=p_data_server[2], move_speed=5, gun=new_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+                new_p_obj.position = list(p_data_server[:2])
+                new_p_obj.rect.topleft = tuple(new_p_obj.position)
+                player_objects[pid_server] = new_p_obj
+                print(f"Added new player {pid_server}")
+        
+        
+        screen.fill("white")
         if "projectiles" in current_game_state:
             for proj_data in current_game_state["projectiles"]:
-                if len(proj_data) == 7:
-                    proj_id, proj_x, proj_y, proj_vx, proj_vy, proj_type, owner_id = proj_data
-                    Projectile.draw(screen, pygame, proj_x, proj_y, proj_vx, proj_vy, proj_type)
+                if len(proj_data) == 7: # id, x, y, vx, vy, type, owner_id
+                    Projectile.draw(screen, pygame, proj_data[1], proj_data[2], proj_data[3], proj_data[4], proj_data[5])
+    else:
+        screen.fill("white")
 
-    m_x_render, m_y_render = pygame.mouse.get_pos()
-
-    if p.health > 0:
-        p.draw(m_x_render, m_y_render)
-
-    if p2.health > 0:
-        # p2.draw(m_x_render, m_y_render)
-        p2.draw(current_game_state["other_player"][3], current_game_state["other_player"][4]) # to be added
-
+    for pid_draw, p_obj_draw in player_objects.items():
+        if p_obj_draw.health > 0:
+            if pid_draw == my_player_id:
+                p_obj_draw.draw(m_x, m_y) 
+            else:
+                remote_player_server_data = server_other_players_data.get(pid_draw)
+                if remote_player_server_data and len(remote_player_server_data) >= 5:
+                    p_obj_draw.draw(remote_player_server_data[3], remote_player_server_data[4])
+                else:
+                    p_obj_draw.draw(int(p_obj_draw.rect.centerx), int(p_obj_draw.rect.centery - 20))
+    
     pygame.display.flip()
     clock.tick(60)
 

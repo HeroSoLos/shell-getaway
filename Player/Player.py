@@ -1,4 +1,6 @@
 import pygame
+import sys
+
 
 class Player:
     """
@@ -20,7 +22,18 @@ class Player:
         self.velocity = [0, 0]
         self.position = [0, 0]
         self.rect = pygame.Rect(0, 0, 50, 50)
+        
+        self.loaded_sprite_image = None
+        if sprite:
+            try:
+                raw_image = pygame.image.load(sprite)
+                self.loaded_sprite_image = pygame.transform.scale(raw_image, (100, 100))
+                print(f"DEBUG Player.__init__: Successfully loaded and scaled sprite: {sprite}", file=sys.stderr)
+            except pygame.error as e:
+                print(f"DEBUG Player.__init__: Failed to load sprite '{sprite}'. Error: {e}", file=sys.stderr)
+                self.loaded_sprite_image = None
     
+    """representation ykyk"""
     def __repr__(self):
         return f"Player(health={self.health}, move_speed={self.move_speed}, gun={self.gun}, sprite={self.sprite})"
 
@@ -58,16 +71,21 @@ class Player:
     Returns: None
     """
     def draw(self, m_x, m_y):
-        if self.sprite:
-            image = pygame.image.load(self.sprite)
-            image = pygame.transform.scale(image, (100, 100))
-            self.screen.blit(image, (self.rect.x-25, self.rect.y-25))
-            self.gun.draw(self.screen, m_x, m_y)
+        if self.loaded_sprite_image:
+            self.screen.blit(self.loaded_sprite_image, (self.rect.x - 25, self.rect.y - 25))
         else:
-            pygame.draw.rect(self.screen, (255, 0, 0), (self.rect.x, self.rect.y, 50, 50))
-            
-        health_bar = pygame.Rect(self.rect.x, self.rect.y - 10, 50 * (self.health / 100), 5)
-        pygame.draw.rect(self.screen, (0, 255, 0), health_bar)
+            pygame.draw.rect(self.screen, (255, 0, 0), self.rect)
+
+        if self.gun:
+            self.gun.update_pos(self.rect.x, self.rect.y) 
+            self.gun.draw(self.screen, m_x, m_y)
+        
+        if self.health > 0:
+            health_bar_width = self.rect.width * (self.health / 100)
+            health_bar_width = max(0, health_bar_width) 
+            health_bar_height = 5
+            health_bar = pygame.Rect(self.rect.x, self.rect.y - 10, health_bar_width, health_bar_height)
+            pygame.draw.rect(self.screen, (0, 255, 0), health_bar)
             
     """
     Shoot a projectile towards the given target coordinates.

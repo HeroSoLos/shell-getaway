@@ -1,6 +1,7 @@
 import pygame
 import pygame.transform
 import math
+import sys
 
 class BaseGun:
     """
@@ -27,7 +28,16 @@ class BaseGun:
         self.projectile_type = projectile_type
         
         self.reload_counter = 0
-        self.shoot_cooldown = 0
+        self.current_shoot_cooldown = 0
+        
+        self.loaded_gun_image = None
+        if self.sprite:
+            try:
+                self.loaded_gun_image = pygame.image.load(self.sprite)
+                print(f"DEBUG BaseGun.__init__: Successfully loaded gun sprite: {self.sprite}", file=sys.stderr)
+            except pygame.error as e:
+                print(f"DEBUG BaseGun.__init__: Failed to load gun sprite '{self.sprite}'. Error: {e}", file=sys.stderr)
+                self.loaded_gun_image = None
     
     
     """
@@ -96,20 +106,23 @@ class BaseGun:
     Returns: None
     """
     def draw(self, screen, m_x, m_y):
-        if self.sprite:
+        if self.loaded_gun_image:
             gun_pivot_x = self.x + 25
             gun_pivot_y = self.y + 25
+            
             angle_rad = math.atan2(m_y - gun_pivot_y, m_x - gun_pivot_x)
             angle_deg = math.degrees(angle_rad)
-            original_image = pygame.image.load(self.sprite)
-            scaled_image = pygame.transform.scale(original_image, (50, 50))
+            
+            scaled_image = pygame.transform.scale(self.loaded_gun_image, (50, 50)) 
             rotated_image = pygame.transform.rotate(scaled_image, -angle_deg)
-            if m_x < self.x+25:
-                new_rect = rotated_image.get_rect(center=(gun_pivot_x-15, gun_pivot_y))
+            
+            offset_distance = 15 
+            if m_x < gun_pivot_x:
+                new_rect = rotated_image.get_rect(center=(gun_pivot_x - offset_distance, gun_pivot_y))
             else:
-                new_rect = rotated_image.get_rect(center=(gun_pivot_x+15, gun_pivot_y))
+                new_rect = rotated_image.get_rect(center=(gun_pivot_x + offset_distance, gun_pivot_y))
             screen.blit(rotated_image, new_rect.topleft)
         else:
-            pygame.draw.rect(screen, (0, 255, 0), (self.x, self.rect.y, 50, 50))
+            pygame.draw.rect(screen, (0, 255, 0), (self.x, self.y+15, 50, 20)) #looked ugly so changed
          
         

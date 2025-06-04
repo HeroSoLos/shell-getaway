@@ -18,42 +18,60 @@ import threading
 server = SERVER_IP
 port = 5555
 projectile_lock = threading.Lock()
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+game_state_lock = threading.Lock()
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
 try:
     s.bind((server, port))
 except socket.error as e:
-    str(e)
+    print(f"CRITICAL: Socket bind error: {e}", file=sys.stderr) 
+    sys.exit(1)
 
-s.listen(2)
-print("Waiting for a connection...")
+try:
+    s.listen()
+except Exception as e:
+    print(f"CRITICAL: Error during socket listen: {e}", file=sys.stderr)
+    sys.exit(1)
+
+print("Waiting for a connection...", file=sys.stderr) 
 
 game_state = {
-    "players": [(0, 0, 100, 0, 0), (100, 100, 100, 0, 0)], # (x, y, health)
+    # "players": [(0, 0, 100, 0, 0), (100, 100, 100, 0, 0)], # (x, y, health)
+    "players": {},
     "projectiles": []
 }
 
 next_projectile_id = 0 
+player_id_lock = threading.Lock()
+next_player_id_counter = 0
 
-def threaded_client(conn, player):
+def threaded_client(conn, player_id):
     global next_projectile_id
     try:
-        my_player_data = game_state["players"][player]
-        other_player_id = 1 - player
-
-        other_player_data = game_state["players"][other_player_id] if 0 <= other_player_id < len(game_state["players"]) else (0,0,100,0,0)
-
+        with game_state_lock:
+            if player_id not in game_state["players"]:
+                print(f"Player {player_id} not found in game_state at thread start.")
+                conn.close()
+                return
+            my_player_data = game_state["players"][player_id]
+            
+            other_players_initial_data = {}
+            for p_id, p_data in game_state["players"].items():
+                if p_id != player_id:
+                    other_players_initial_data[p_id] = p_data
 
         initial_data_for_client = {
+            "my_id": player_id,
             "my_player": my_player_data,
-            "other_player": other_player_data,
+            "other_players": other_players_initial_data,
             "projectiles": []
         }
         conn.send(str.encode(make_pos(initial_data_for_client)))
+    
     except Exception as e:
-        print(f"Error sending initial data to client: {e}")
+        print(f"Error sending initial data to client for player {player_id}: {e}")
         conn.close()
         return
     
@@ -61,24 +79,25 @@ def threaded_client(conn, player):
         try:
             raw_data = conn.recv(2048).decode("utf-8")
             if not raw_data:
-                print(f"Player {player} disconnected (no data).")
+                print(f"Player {player_id} disconnected (no data).")
                 break
 
-            print(f"Raw data from player {player}: {raw_data}")
+            print(f"Raw data from player {player_id}: {raw_data}")
             data = read_pos(raw_data)
 
             if data is None:
-                print(f"Invalid JSON data received from player {player}: {raw_data}")
+                print(f"Invalid JSON data received from player {player_id}: {raw_data}")
                 continue
 
             if isinstance(data, dict) and data.get('action') == 'shoot':
-                print("shoot attempted")
+                # print("shoot attempted")
                 details = data.get('details')
                 if details:
-                    print(f"Player {player} shoot command: {details}")
-                    next_projectile_id += 1
-                    proj_id = next_projectile_id
-                    owner_id = player
+                    print(f"Player {player_id} shoot command: {details}")
+                    with projectile_lock:
+                        next_projectile_id += 1
+                        proj_id = next_projectile_id
+                    owner_id = player_id
                     proj_type = details.get('projectile_type', 'standard_bullet')
                     start_x = details.get('gun_x')
                     start_y = details.get('gun_y')
@@ -102,50 +121,62 @@ def threaded_client(conn, player):
                             vy = norm_dir_y * projectile_speed
                         
                         radius = 5
-
-                        new_projectile = Projectile(id=proj_id, x=start_x, y=start_y, 
-                                                    vx=vx, vy=vy, radius=radius, 
-                                                    owner_id=owner_id, damage=damage, projectile_type=proj_type)
-                        game_state["projectiles"].append(new_projectile)
-                        print(f"Created projectile {proj_id} for player {player}")
+                        with projectile_lock:
+                            new_projectile = Projectile(id=proj_id, x=start_x, y=start_y, 
+                                                        vx=vx, vy=vy, radius=radius, 
+                                                        owner_id=owner_id, damage=damage, projectile_type=proj_type)
+                            game_state["projectiles"].append(new_projectile)
+                        print(f"Created projectile {proj_id} for player {player_id}")
                     else:
                         print(f"Missing details in shoot command from player {player}")
                 else:
-                    print(f"Shoot command from player {player} missing 'details'.")
+                    print(f"Shoot command from player {player_id} missing 'details'.")
 
             elif isinstance(data, (list, tuple)):
-                print("updating info attempted")
+                # print("updating info attempted")
                 if len(data) == 5:
                     try:
-                        pos_data = (float(data[0]), float(data[1]), float(data[2]), float(data[3]), float(data[4]))
-                        game_state["players"][player] = (pos_data[0], pos_data[1], game_state["players"][player][2], pos_data[3], pos_data[4])
+                        with game_state_lock:
+                            if player_id in game_state["players"]:
+                                current_health = game_state["players"][player_id][2]
+                                game_state["players"][player_id] = (float(data[0]), float(data[1]), current_health, float(data[3]), float(data[4]))
+                            else:
+                                print(f"Player {player_id} not found for position update, likely disconnected.")
+                                break
                     except (ValueError, TypeError) as e:
-                        print(f"Invalid position data format from player {player}: {data}, error: {e}")
+                        print(f"Invalid position data format from player {player_id}: {data}, error: {e}")
                 else:
-                    print(f"Invalid position data structure from player {player}: {data}")
+                    print(f"Invalid position data structure from player {player_id}: {data}")
             
             else:
-                print(f"Unknown data type received from player {player}: {type(data)}, data: {data}")
+                print(f"Unknown data type received from player {player_id}: {type(data)}, data: {data}")
 
             
             projectiles_to_remove = []
             with projectile_lock:
-                for proj in game_state["projectiles"][:]:
-                    proj.update()
-                    screen_width = 600 
-                    screen_height = 300
-                    if not (-50 < proj.position[0] < screen_width + 50 and \
-                            -50 < proj.position[1] < screen_height + 50):
-                        if proj not in projectiles_to_remove:
-                           projectiles_to_remove.append(proj)
-                        print(f"Projectile {proj.id} removed due to boundary.")
-                        continue
+                current_projectiles = game_state["projectiles"][:]
+            
+            for proj in current_projectiles:
+                proj.update()
+                screen_width = 600 
+                screen_height = 300
+                if not (-50 < proj.position[0] < screen_width + 50 and \
+                        -50 < proj.position[1] < screen_height + 50):
+                    if proj not in projectiles_to_remove:
+                        projectiles_to_remove.append(proj)
+                    print(f"Projectile {proj.id} removed due to boundary.")
+                    continue
                     
-                    player_width = 50
-                    player_height = 50
-                    projectile_damage = proj.damage
+                player_width = 50
+                player_height = 50
+                projectile_damage = proj.damage
 
-                    for player_idx, player_data in enumerate(game_state["players"]):
+                with game_state_lock:
+                    active_player_ids_for_collision = list(game_state["players"].keys())
+                    for p_id_collision in active_player_ids_for_collision:
+                        if p_id_collision not in game_state["players"]:
+                            continue
+                        player_data = game_state["players"][p_id_collision]
                         player_pos_x, player_pos_y, player_health, _m_x, _m_y = player_data
                         
                         player_rect_x_start = player_pos_x
@@ -160,25 +191,29 @@ def threaded_client(conn, player):
                                     player_rect_y_start < proj_center_y < player_rect_y_end)
 
                         if collided:
-                            if proj.owner_id != player_idx:
+                            if proj.owner_id != p_id_collision:
                                 new_health = player_health - projectile_damage
-                                game_state["players"][player_idx] = (player_pos_x, player_pos_y, max(0, new_health), _m_x, _m_y)
-                                print(f"Player {player_idx} hit by projectile {proj.id}. Health: {new_health}")
+                                game_state["players"][p_id_collision] = (player_pos_x, player_pos_y, max(0, new_health), _m_x, _m_y)
+                                print(f"Player {p_id_collision} hit by projectile {proj.id}. Health: {new_health}")
                                 if proj not in projectiles_to_remove:
                                     projectiles_to_remove.append(proj)
-                                break
-                
+            with projectile_lock:    
                 for proj_to_remove in projectiles_to_remove:
                     if proj_to_remove in game_state["projectiles"]:
                         game_state["projectiles"].remove(proj_to_remove)
 
-            my_current_health = game_state["players"][player][2]
+            my_current_health = -1
+            other_players_update_data = {}
             
-            other_player_id = 1 - player
-            if 0 <= other_player_id < len(game_state["players"]):
-                reply_other_player_data = game_state["players"][other_player_id]
-            else:
-                reply_other_player_data = (0.0, 0.0, 100.0, 0.0, 0.0)
+            with game_state_lock:
+                if player_id in game_state["players"]:
+                    my_current_health = game_state["players"][player_id][2]
+                    for p_id_update, p_data_update in game_state["players"].items():
+                        if p_id_update != player_id:
+                            other_players_update_data[p_id_update] = p_data_update
+                else:
+                    print(f"Player {player_id} disconnected before sending update packet.")
+                    break 
             
             projectiles_data_for_client = []
             with projectile_lock:
@@ -194,23 +229,43 @@ def threaded_client(conn, player):
                     ))
 
             data_to_send_client = {
+                "my_id": player_id,
                 "my_player_updated_health": my_current_health,
-                "other_player": reply_other_player_data,
+                "other_players": other_players_update_data,
                 "projectiles": projectiles_data_for_client
             }
-            print(f"Player {player} state update. Sending my_health: {my_current_health}, other_player: {reply_other_player_data}, projectiles: {len(projectiles_data_for_client)}")
+            print(f"Player {player_id} state update. Sending my_health: {my_current_health}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}")
             conn.sendall(str.encode(make_pos(data_to_send_client)))
 
+        except socket.error as e:
+            print(f"Socket error for player {player_id}: {e}")
+            break
+        
         except Exception as e:
-            print(f"Error in player {player}'s thread: {e}")
+            print(f"Error in player {player_id}'s thread: {e}")
+            import traceback
+            traceback.print_exc()
             break
     
-    print(f"Player {player} lost connection.")
+    print(f"Player {player_id} lost connection.")
+    with game_state_lock:
+        if player_id in game_state["players"]:
+            del game_state["players"][player_id]
+            print(f"Player {player_id} removed from game_state. Total players: {len(game_state['players'])}")
     conn.close()
 
-currentPlayer = 0
 while True:
     conn, addr = s.accept()
     print("Connected to: ", addr)
-    start_new_thread(threaded_client, (conn, currentPlayer))
-    currentPlayer += 1
+    
+    current_id = -1
+    with player_id_lock:
+        current_id = next_player_id_counter
+        next_player_id_counter += 1
+    
+    initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y = 50, 50, 100, 0, 0
+    with game_state_lock:
+        game_state["players"][current_id] = (initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y)
+        print(f"Player {current_id} connected. Total players: {len(game_state['players'])}")
+
+    start_new_thread(threaded_client, (conn, current_id))
