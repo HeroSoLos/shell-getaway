@@ -3,7 +3,7 @@ import math
 class Physics:
     def __init__(self):
         self.gravity = 9.81
-        self.friction_coefficient = 0.6
+        self.friction_coefficient = 1
         self.velocity_threshold = 0.01
     
     """
@@ -61,14 +61,15 @@ class Physics:
     postcondition: velocity doesn't exceed limit
     """
     def capVelocity(self, p):
+        cap = 50
         if hasattr(p, 'velocity'):
-            if p.velocity[0] < -100:
-                p.velocity[0] = -100
-            elif p.velocity[0] > 100:
-                p.velocity[0] = 100
+            if p.velocity[0] < -cap:
+                p.velocity[0] = -cap
+            elif p.velocity[0] > cap:
+                p.velocity[0] = cap
             
-            if p.velocity[1] < -100:
-                p.velocity[1] = -100
-            elif p.velocity[1] > 100:
-                p.velocity[1] = 100
+            if p.velocity[1] < -cap:
+                p.velocity[1] = -cap
+            elif p.velocity[1] > cap:
+                p.velocity[1] = cap
             

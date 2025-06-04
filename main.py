@@ -6,7 +6,7 @@ from Physics import *
 from Server.utils import *
 from Server.network import *
 from Gun.projectile import Projectile
-
+from Gun.compressor import Compressor
 # pygame setup
 pygame.init()
 kill_streak_font = pygame.font.SysFont(None, 30)
@@ -17,6 +17,10 @@ screen_width = screen.get_width()
 screen_height = screen.get_height()
 clock = pygame.time.Clock()
 running = True
+
+# Compressor testing
+compressor = Compressor(10, 0, 0, sprite="assets/RPG.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='standard_bullet')
+
 
 # Object setup
 n = Network()
@@ -105,6 +109,8 @@ while running:
             direction[1] = -.1
         if keys[pygame.K_DOWN]:
             direction[1] = .1
+        if keys[pygame.K_q]:
+            compressor.shoot(local_player, m_x, m_y)
         local_player.update_velocity(direction)
         
         Physics.applyFriction(local_player)

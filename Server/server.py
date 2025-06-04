@@ -86,7 +86,7 @@ def threaded_client(conn, player_id):
                 print(f"Player {player_id} disconnected (no data).")
                 break
 
-            print(f"Raw data from player {player_id}: {raw_data}")
+            # print(f"Raw data from player {player_id}: {raw_data}")
             data = read_pos(raw_data)
 
             if data is None:
@@ -210,7 +210,7 @@ def threaded_client(conn, player_id):
 
                                     new_x_respawn = random.uniform(-2000, 2000)
                                     new_y_respawn = random.uniform(-2000, 2000)
-                                    # print(f"DEBUG SERVER: Player {killed_id} died. Generated respawn coords: ({new_x_respawn}, {new_y_respawn}). Storing for respawn event.", file=sys.stderr)
+                                    print(f"DEBUG SERVER: Player {killed_id} died. Generated respawn coords: ({new_x_respawn}, {new_y_respawn}). Storing for respawn event.", file=sys.stderr)
                                     respawn_events_this_tick[killed_id] = [new_x_respawn, new_y_respawn]
                                     
                                     print(f"Player {killed_id} killed by {killer_id}. Health set to 100. Respawn event generated for ({new_x_respawn}, {new_y_respawn}).")
