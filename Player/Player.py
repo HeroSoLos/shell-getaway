@@ -106,9 +106,9 @@ class Player:
     Postcondition: The gun may have fired a projectile.
     Returns: A dictionary with projectile details if shot, else None.
     """
-    def shoot(self, target_x, target_y):
+    def shoot(self, player, target_x, target_y):
         if self.gun:
-            return self.gun.shoot(target_x, target_y)
+            return self.gun.shoot(player, target_x, target_y)
         return None
 
 

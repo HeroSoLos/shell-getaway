@@ -85,8 +85,10 @@ def threaded_client(conn, player_id):
             if not raw_data:
                 print(f"Player {player_id} disconnected (no data).")
                 break
-
-            # print(f"Raw data from player {player_id}: {raw_data}")
+            
+            ###########################
+            print(f"Raw data from player {player_id}: {raw_data}")
+            
             data = read_pos(raw_data)
 
             if data is None:

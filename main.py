@@ -80,7 +80,7 @@ while running:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN and local_player:
             if event.button == 1:
-                shoot_command_details = local_player.shoot(m_x, m_y)
+                shoot_command_details = local_player.shoot(local_player, m_x, m_y)
                 if shoot_command_details:
                     data_to_send = {"action": "shoot", "details": shoot_command_details}
 
