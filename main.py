@@ -18,8 +18,9 @@ screen_height = screen.get_height()
 clock = pygame.time.Clock()
 running = True
 
-# Compressor testing
-compressor = Compressor(10, 0, 0, sprite="assets/RPG.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='standard_bullet')
+# Weapon instances for local player
+primary_gun_local_player_instance = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet', weapon_type_id="sniper")
+secondary_gun_local_player_instance = Compressor(10, 0, 0, sprite="assets/Compressor.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='compressor_shot', weapon_type_id="compressor")
 
 
 # Object setup
@@ -37,8 +38,13 @@ if initial_state and "my_id" in initial_state:
     my_player_id = initial_state["my_id"]
     my_data = initial_state.get("my_player")
     if my_data:
-        player_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
-        p_obj = Player(health=my_data[2], move_speed=5, gun=player_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+        p_obj = Player(health=my_data[2], 
+                       move_speed=5, 
+                       primary_gun=primary_gun_local_player_instance, 
+                       secondary_gun=secondary_gun_local_player_instance, 
+                       screen=screen, 
+                       player=None, 
+                       sprite="assets/Egg_sprite.png")
         p_obj.position = list(my_data[:2])
         p_obj.rect.topleft = tuple(p_obj.position)
         player_objects[my_player_id] = p_obj
@@ -47,9 +53,16 @@ if initial_state and "my_id" in initial_state:
 
     if "other_players" in initial_state:
         for other_id, other_data in initial_state["other_players"].items():
-            if other_id == my_player_id: continue # temp fix
-            other_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
-            op_obj = Player(health=other_data[2], move_speed=5, gun=other_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+            if other_id == my_player_id: continue 
+            other_player_primary_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet', weapon_type_id="sniper")
+            other_player_secondary_gun = Compressor(10, 0, 0, sprite="assets/RPG.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='compressor_shot', weapon_type_id="compressor")
+            op_obj = Player(health=other_data[2], 
+                            move_speed=5, 
+                            primary_gun=other_player_primary_gun, 
+                            secondary_gun=other_player_secondary_gun, 
+                            screen=screen, 
+                            player=None, 
+                            sprite="assets/Egg_sprite.png")
             op_obj.position = list(other_data[:2])
             op_obj.rect.topleft = tuple(op_obj.position)
             player_objects[other_id] = op_obj
@@ -71,18 +84,28 @@ while running:
     m_x = m_x_screen + camera_offset_x
     m_y = m_y_screen + camera_offset_y
     data_to_send = None
-
     if local_player:
         data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
     
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        if event.type == pygame.MOUSEBUTTONDOWN and local_player:
-            if event.button == 1:
-                shoot_command_details = local_player.shoot(local_player, m_x, m_y)
-                if shoot_command_details:
-                    data_to_send = {"action": "shoot", "details": shoot_command_details}
+        if local_player:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # Left mouse button
+                    shoot_command_details = local_player.shoot(local_player, m_x, m_y)
+                    if shoot_command_details:
+                        data_to_send = {"action": "shoot", "details": shoot_command_details}
+            elif event.type == pygame.KEYDOWN:
+                switched_weapon_id = None
+                if event.key == pygame.K_1:
+                    switched_weapon_id = local_player.switch_weapon(0)
+                    print(f"Switched to {switched_weapon_id}")
+                    data_to_send = {"action": "switch_weapon", "weapon_id": switched_weapon_id}
+                elif event.key == pygame.K_2:
+                    switched_weapon_id = local_player.switch_weapon(1)
+                    print(f"Switched to {switched_weapon_id}")
+                    data_to_send = {"action": "switch_weapon", "weapon_id": switched_weapon_id}
 
     # move and collosion stuff
     if local_player:
@@ -109,8 +132,11 @@ while running:
             direction[1] = -.1
         if keys[pygame.K_DOWN]:
             direction[1] = .1
-        if keys[pygame.K_q]:
-            compressor.shoot(local_player, m_x, m_y)
+        if keys[pygame.K_q]: # This was for testing compressor directly, might be removed or kept.
+            # If kept, it should use the active gun if compressor is selected.
+            # For now, assuming it's for testing and might not align with new weapon switching.
+            # local_player.gun.shoot(local_player, m_x, m_y) # This would use the active gun
+            pass # Decided to comment out direct compressor test via Q for now.
         local_player.update_velocity(direction)
         
         Physics.applyFriction(local_player)
@@ -122,7 +148,7 @@ while running:
             camera_offset_x = local_player.position[0] - screen_width / 2
             camera_offset_y = local_player.position[1] - screen_height / 2
         
-        if not (isinstance(data_to_send, dict) and data_to_send.get("action") == "shoot"):
+        if not isinstance(data_to_send, dict):
             data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
 
     current_game_state = n.send(data_to_send)
@@ -153,7 +179,7 @@ while running:
                 else:
                     pass
                     # print(f"DEBUG CLIENT: Received event_for_me of unexpected type or structure: {my_event}", file=sys.stderr)
-            elif my_event is not None: # It was not None, but not a dict, or type was missing
+            elif my_event is not None:
                 pass
                 # print(f"DEBUG CLIENT: Received event_for_me with unexpected structure (not a dict or type missing): {my_event}", file=sys.stderr)
 
@@ -177,14 +203,34 @@ while running:
                 player_to_update.position = list(p_data_server[:2])
                 player_to_update.health = p_data_server[2]
                 player_to_update.rect.topleft = tuple(player_to_update.position)
-            else:
-                new_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet')
-                new_p_obj = Player(health=p_data_server[2], move_speed=5, gun=new_gun, screen=screen, player=None, sprite="assets/Egg_sprite.png")
+                
+                if len(p_data_server) > 5:
+                    active_weapon_id_from_server = p_data_server[5]
+                    if player_to_update.primary_gun and active_weapon_id_from_server == player_to_update.primary_gun.weapon_type_id:
+                        player_to_update.switch_weapon(0)
+                    elif player_to_update.secondary_gun and active_weapon_id_from_server == player_to_update.secondary_gun.weapon_type_id:
+                        player_to_update.switch_weapon(1)
+            else: # New player
+                new_player_primary_gun = BaseGun(magazine_size=10, x=0, y=0, sprite="assets/sniper.png", reload_time=60, shoot_cooldown=6, projectile_type='standard_bullet', weapon_type_id="sniper")
+                new_player_secondary_gun = Compressor(10, 0, 0, sprite="assets/RPG.png", reload_time=10, shoot_cooldown=10, damage=10, projectile_type='compressor_shot', weapon_type_id="compressor")
+                new_p_obj = Player(health=p_data_server[2], 
+                                   move_speed=5, 
+                                   primary_gun=new_player_primary_gun, 
+                                   secondary_gun=new_player_secondary_gun, 
+                                   screen=screen, 
+                                   player=None, 
+                                   sprite="assets/Egg_sprite.png")
                 new_p_obj.position = list(p_data_server[:2])
                 new_p_obj.rect.topleft = tuple(new_p_obj.position)
                 player_objects[pid_server] = new_p_obj
                 print(f"Added new player {pid_server}")
-        
+                
+                if len(p_data_server) > 5:
+                    active_weapon_id_from_server = p_data_server[5]
+                    if new_p_obj.primary_gun and active_weapon_id_from_server == new_p_obj.primary_gun.weapon_type_id:
+                        new_p_obj.switch_weapon(0)
+                    elif new_p_obj.secondary_gun and active_weapon_id_from_server == new_p_obj.secondary_gun.weapon_type_id:
+                        new_p_obj.switch_weapon(1)
         
         screen.fill("white")
         if "projectiles" in current_game_state:

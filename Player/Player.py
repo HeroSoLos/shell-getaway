@@ -9,13 +9,16 @@ class Player:
     Args:
         health (float): health,
         move_speed (float): move speed,
-        gun (BaseGun): gun,
+        primary_gun (BaseGun): primary gun,
+        secondary_gun (BaseGun): secondary gun,
         sprite (str, optional): sprite, default None, is a path to the image
     """
-    def __init__(self, health, move_speed, gun, screen, player, sprite=None):
+    def __init__(self, health, move_speed, primary_gun, secondary_gun, screen, player, sprite=None):
         self.health = health
         self.move_speed = move_speed
-        self.gun = gun
+        self.primary_gun = primary_gun
+        self.secondary_gun = secondary_gun
+        self.active_gun_slot = 0  # 0 for primary, 1 for secondary
         self.screen = screen
         self.player = player
         self.sprite = sprite
@@ -36,7 +39,15 @@ class Player:
     
     """representation ykyk"""
     def __repr__(self):
-        return f"Player(health={self.health}, move_speed={self.move_speed}, gun={self.gun}, sprite={self.sprite})"
+        return f"Player(health={self.health}, move_speed={self.move_speed}, primary_gun={self.primary_gun}, secondary_gun={self.secondary_gun}, sprite={self.sprite})"
+
+    @property
+    def gun(self):
+        if self.active_gun_slot == 0:
+            return self.primary_gun
+        elif self.active_gun_slot == 1:
+            return self.secondary_gun
+        return None
 
     """
     Update velocity.
@@ -111,5 +122,26 @@ class Player:
             return self.gun.shoot(player, target_x, target_y)
         return None
 
-
-
+    """
+    Switch the active weapon slot.
+    Args:
+        slot (int): The weapon slot to activate (0 for primary, 1 for secondary).
+    Postcondition: The active weapon slot is updated, and the active gun is switched.
+    Returns: str: The weapon_type_id of the newly active weapon, or "unknown_weapon" if slot is invalid or gun is missing.
+    """
+    def switch_weapon(self, slot):
+        if slot == 0:
+            self.active_gun_slot = 0
+            if self.primary_gun and hasattr(self.primary_gun, 'weapon_type_id'):
+                return self.primary_gun.weapon_type_id
+            return "unknown_primary_gun_type"
+        elif slot == 1:
+            self.active_gun_slot = 1
+            if self.secondary_gun and hasattr(self.secondary_gun, 'weapon_type_id'):
+                return self.secondary_gun.weapon_type_id
+            return "unknown_secondary_gun_type"
+        
+        print(f"Warning: Invalid weapon slot {slot} requested.", file=sys.stderr)
+        if self.gun and hasattr(self.gun, 'weapon_type_id'):
+            return self.gun.weapon_type_id
+        return "unknown_weapon"

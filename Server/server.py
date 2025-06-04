@@ -138,14 +138,39 @@ def threaded_client(conn, player_id):
                 else:
                     print(f"Shoot command from player {player_id} missing 'details'.")
 
+            elif isinstance(data, dict) and data.get('action') == 'switch_weapon':
+                new_weapon_id = data.get('weapon_id')
+                if new_weapon_id:
+                    with game_state_lock:
+                        if player_id in game_state["players"]:
+                            current_player_data = game_state["players"][player_id]
+                            game_state["players"][player_id] = (current_player_data[0], # x
+                                                                current_player_data[1], # y
+                                                                current_player_data[2], # health
+                                                                current_player_data[3], # mouse_x
+                                                                current_player_data[4], # mouse_y
+                                                                new_weapon_id)          # active_weapon_id
+                            print(f"Player {player_id} switched to weapon: {new_weapon_id}")
+                        else:
+                            print(f"Player {player_id} not found for weapon switch, likely disconnected.")
+                else:
+                    print(f"Invalid or missing weapon_id '{new_weapon_id}' received from player {player_id}")
+
             elif isinstance(data, (list, tuple)):
                 # print("updating info attempted")
                 if len(data) == 5:
                     try:
                         with game_state_lock:
                             if player_id in game_state["players"]:
-                                current_health = game_state["players"][player_id][2]
-                                game_state["players"][player_id] = (float(data[0]), float(data[1]), current_health, float(data[3]), float(data[4]))
+                                current_player_server_data = game_state["players"][player_id]
+                                server_health = current_player_server_data[2]
+                                server_weapon_id = current_player_server_data[5] 
+                                game_state["players"][player_id] = (float(data[0]), # x from client
+                                                                    float(data[1]), # y from client
+                                                                    server_health,  # health from server
+                                                                    float(data[3]), # mouse_x from client
+                                                                    float(data[4]), # mouse_y from client
+                                                                    server_weapon_id) # weapon_id from server
                             else:
                                 print(f"Player {player_id} not found for position update, likely disconnected.")
                                 break
@@ -183,7 +208,7 @@ def threaded_client(conn, player_id):
                         if p_id_collision not in game_state["players"]:
                             continue
                         player_data = game_state["players"][p_id_collision]
-                        player_pos_x, player_pos_y, player_health, _m_x, _m_y = player_data
+                        player_pos_x, player_pos_y, player_health, _m_x, _m_y, p_active_weapon_id = player_data
                         
                         player_rect_x_start = player_pos_x
                         player_rect_x_end = player_pos_x + player_width
@@ -203,9 +228,10 @@ def threaded_client(conn, player_id):
                                     killer_id = proj.owner_id
                                     killed_id = p_id_collision
                                     
-                                    game_state["players"][killed_id] = (player_pos_x, player_pos_y, 100, _m_x, _m_y)
+                                    killed_player_current_weapon_id = game_state["players"][killed_id][5]
+                                    game_state["players"][killed_id] = (player_pos_x, player_pos_y, 100, _m_x, _m_y, killed_player_current_weapon_id)
 
-                                    if killer_id != killed_id: # No self-kill streak
+                                    if killer_id != killed_id:
                                         game_state["kill_streaks"][killer_id] = game_state["kill_streaks"].get(killer_id, 0) + 1
                                     
                                     game_state["kill_streaks"][killed_id] = 0
@@ -215,10 +241,12 @@ def threaded_client(conn, player_id):
                                     print(f"DEBUG SERVER: Player {killed_id} died. Generated respawn coords: ({new_x_respawn}, {new_y_respawn}). Storing for respawn event.", file=sys.stderr)
                                     respawn_events_this_tick[killed_id] = [new_x_respawn, new_y_respawn]
                                     
-                                    print(f"Player {killed_id} killed by {killer_id}. Health set to 100. Respawn event generated for ({new_x_respawn}, {new_y_respawn}).")
+                                    # game_state["players"][killed_id] already updated with new health and preserved weapon_id
+                                    print(f"Player {killed_id} killed by {killer_id}. Health set to 100. Weapon ID {killed_player_current_weapon_id} preserved. Respawn event generated for ({new_x_respawn}, {new_y_respawn}).")
                                 else:
-                                    game_state["players"][p_id_collision] = (player_pos_x, player_pos_y, new_health, _m_x, _m_y)
-                                    print(f"Player {p_id_collision} hit by projectile {proj.id}. Health: {new_health}")
+                                    hit_player_current_weapon_id = game_state["players"][p_id_collision][5]
+                                    game_state["players"][p_id_collision] = (player_pos_x, player_pos_y, new_health, _m_x, _m_y, hit_player_current_weapon_id)
+                                    print(f"Player {p_id_collision} hit by projectile {proj.id}. Health: {new_health}. Weapon ID {hit_player_current_weapon_id} preserved.")
                                 
                                 if proj not in projectiles_to_remove:
                                     projectiles_to_remove.append(proj)
@@ -305,9 +333,10 @@ while True:
         next_player_id_counter += 1
     
     initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y = 50, 50, 100, 0, 0
+    initial_weapon_id = "sniper"
     with game_state_lock:
-        game_state["players"][current_id] = (initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y)
+        game_state["players"][current_id] = (initial_x, initial_y, initial_health, initial_mouse_x, initial_mouse_y, initial_weapon_id)
         game_state["kill_streaks"][current_id] = 0
-        print(f"Player {current_id} connected. Total players: {len(game_state['players'])}. Kill streak initialized.")
+        print(f"Player {current_id} connected. Initial weapon: {initial_weapon_id}. Total players: {len(game_state['players'])}. Kill streak initialized.")
 
     start_new_thread(threaded_client, (conn, current_id))

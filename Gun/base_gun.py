@@ -15,10 +15,12 @@ class BaseGun:
         bullet_speed (float): used to send bullet speed
         damage (int, optional): damage, default 1
         projectile_type (str, optional): type of projectile, default 'standard_bullet'
+        weapon_type_id (str, optional): specific identifier for the weapon type, default 'base_gun'
     """
-    def __init__(self, magazine_size, x, y, sprite, reload_time, shoot_cooldown, damage=10, projectile_type='standard_bullet'):
+    def __init__(self, magazine_size, x, y, sprite, reload_time, shoot_cooldown, damage=10, projectile_type='standard_bullet', weapon_type_id='base_gun'):
         self.magazine_size = magazine_size
         self.sprite = sprite
+        self.weapon_type_id = weapon_type_id
         self.current_bullets = magazine_size
         self.x = x
         self.y = y

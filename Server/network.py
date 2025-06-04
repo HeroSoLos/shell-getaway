@@ -18,7 +18,7 @@ class Network:
     def connect(self):
         try:
             self.client.connect(self.addr)
-            raw_initial_data = self.client.recv(8192).decode("utf-8")
+            raw_initial_data = self.client.recv(2048).decode("utf-8")
             self.initial_game_state = read_pos(raw_initial_data)
             print(f"Connected to server at {self.addr}. Initial state: {self.initial_game_state}")
             if not isinstance(self.initial_game_state, dict):
@@ -42,7 +42,7 @@ class Network:
             
             self.client.send(str.encode(make_pos(data_to_server)))
             
-            reply_string = self.client.recv(8192).decode("utf-8")
+            reply_string = self.client.recv(2048).decode("utf-8")
             
             game_state_from_server = read_pos(reply_string)
             
