@@ -87,7 +87,7 @@ def threaded_client(conn, player_id):
                 break
             
             ###########################
-            print(f"Raw data from player {player_id}: {raw_data}")
+            # print(f"Raw data from player {player_id}: {raw_data}")
             
             data = read_pos(raw_data)
 
@@ -95,93 +95,110 @@ def threaded_client(conn, player_id):
                 print(f"Invalid JSON data received from player {player_id}: {raw_data}")
                 continue
 
-            if isinstance(data, dict) and data.get('action') == 'shoot':
-                # print("shoot attempted")
-                details = data.get('details')
-                if details:
-                    print(f"Player {player_id} shoot command: {details}")
-                    with projectile_lock:
-                        next_projectile_id += 1
-                        proj_id = next_projectile_id
-                    owner_id = player_id
-                    proj_type = details.get('projectile_type', 'standard_bullet')
-                    start_x = details.get('gun_x')
-                    start_y = details.get('gun_y')
-                    target_x = details.get('target_x')
-                    target_y = details.get('target_y')
-                    damage = details.get('damage')
+            # ULTIMATE DEBUG LINE
+            # print(f"Raw data from player {player_id}: {raw_data}") 
 
-                    if start_x is not None and start_y is not None and target_x is not None and target_y is not None:
-                        dir_x = target_x - start_x
-                        dir_y = target_y - start_y
-                        magnitude = math.sqrt(dir_x**2 + dir_y**2)
-                        
-                        projectile_speed = 10
+            actions_to_process = []
+            if isinstance(data, list) and data and all(isinstance(item, dict) and 'action' in item for item in data):
+                actions_to_process = data
+            elif isinstance(data, dict) and 'action' in data:
+                actions_to_process = [data] # convert list
 
-                        if magnitude == 0:
-                            vx, vy = 0, projectile_speed
+            # Process acksions
+            if actions_to_process:
+                for action_item in actions_to_process:
+                    if action_item.get('action') == 'shoot':
+                        details = action_item.get('details')
+                        if details:
+                            print(f"Player {player_id} shoot command: {details}") 
+                            with projectile_lock: 
+                                next_projectile_id += 1 
+                                proj_id = next_projectile_id
+                            owner_id = player_id 
+                            proj_type = details.get('projectile_type', 'standard_bullet')
+                            start_x = details.get('gun_x')
+                            start_y = details.get('gun_y')
+                            target_x = details.get('target_x')
+                            target_y = details.get('target_y')
+                            damage = details.get('damage')
+
+                            if start_x is not None and start_y is not None and target_x is not None and target_y is not None:
+                                dir_x = target_x - start_x
+                                dir_y = target_y - start_y
+                                magnitude = math.sqrt(dir_x**2 + dir_y**2)
+                                projectile_speed = 10 
+                                if magnitude == 0:
+                                    vx, vy = 0, projectile_speed
+                                else:
+                                    norm_dir_x = dir_x / magnitude
+                                    norm_dir_y = dir_y / magnitude
+                                    vx = norm_dir_x * projectile_speed
+                                    vy = norm_dir_y * projectile_speed
+                                radius = 5 
+                                with projectile_lock: 
+                                    new_projectile = Projectile(id=proj_id, x=start_x, y=start_y,
+                                                                vx=vx, vy=vy, radius=radius,
+                                                                owner_id=owner_id, damage=damage, projectile_type=proj_type)
+                                    game_state["projectiles"].append(new_projectile) 
+                                print(f"Created projectile {proj_id} for player {player_id} (Action: Shoot)") 
+                            else:
+                                print(f"Missing details in shoot command from player {player_id}: {details}")
                         else:
-                            norm_dir_x = dir_x / magnitude
-                            norm_dir_y = dir_y / magnitude
-                            vx = norm_dir_x * projectile_speed
-                            vy = norm_dir_y * projectile_speed
-                        
-                        radius = 5
-                        with projectile_lock:
-                            new_projectile = Projectile(id=proj_id, x=start_x, y=start_y, 
-                                                        vx=vx, vy=vy, radius=radius, 
-                                                        owner_id=owner_id, damage=damage, projectile_type=proj_type)
-                            game_state["projectiles"].append(new_projectile)
-                        print(f"Created projectile {proj_id} for player {player_id}")
+                            print(f"Shoot command from player {player_id} missing 'details': {action_item}")
+                    
+                    elif action_item.get('action') == 'switch_weapon':
+                        new_weapon_id = action_item.get('weapon_id')
+                        if new_weapon_id:
+                            print(f"Player {player_id} switch weapon command to: {new_weapon_id}") 
+                            with game_state_lock: 
+                                if player_id in game_state["players"]:
+                                    current_player_data = game_state["players"][player_id]
+                                    px, py, phealth = current_player_data[0], current_player_data[1], current_player_data[2]
+                                    mouse_x = current_player_data[3] if len(current_player_data) > 3 else 0
+                                    mouse_y = current_player_data[4] if len(current_player_data) > 4 else 0
+                                    
+                                    game_state["players"][player_id] = (px, py, phealth, mouse_x, mouse_y, new_weapon_id)
+                                    print(f"Player {player_id} successfully switched to weapon: {new_weapon_id}") 
+                                else:
+                                    print(f"Player {player_id} not found for weapon switch, likely disconnected.")
+                        else:
+                            print(f"Switch weapon command from player {player_id} missing 'weapon_id': {action_item}")
                     else:
-                        print(f"Missing details in shoot command from player {player_id}")
-                else:
-                    print(f"Shoot command from player {player_id} missing 'details'.")
-
-            elif isinstance(data, dict) and data.get('action') == 'switch_weapon':
-                new_weapon_id = data.get('weapon_id')
-                if new_weapon_id:
-                    with game_state_lock:
-                        if player_id in game_state["players"]:
-                            current_player_data = game_state["players"][player_id]
-                            game_state["players"][player_id] = (current_player_data[0], # x
-                                                                current_player_data[1], # y
-                                                                current_player_data[2], # health
-                                                                current_player_data[3], # mouse_x
-                                                                current_player_data[4], # mouse_y
-                                                                new_weapon_id)          # active_weapon_id
-                            print(f"Player {player_id} switched to weapon: {new_weapon_id}")
-                        else:
-                            print(f"Player {player_id} not found for weapon switch, likely disconnected.")
-                else:
-                    print(f"Invalid or missing weapon_id '{new_weapon_id}' received from player {player_id}")
+                        print(f"Unknown action in action list/dict from player {player_id}: {action_item}")
 
             elif isinstance(data, (list, tuple)):
-                # print("updating info attempted")
-                if len(data) == 5:
+                if len(data) == 5 and \
+                   all(isinstance(x, (int, float)) for x in [data[0], data[1], data[3], data[4]]) and \
+                   isinstance(data[2], (int, float)): # [x,y,h,mx,my]
+                    # print(f"Player {player_id} position update: {data}") # Optional log
                     try:
-                        with game_state_lock:
+                        with game_state_lock: 
                             if player_id in game_state["players"]:
                                 current_player_server_data = game_state["players"][player_id]
-                                server_health = current_player_server_data[2]
-                                server_weapon_id = current_player_server_data[5] 
-                                game_state["players"][player_id] = (float(data[0]), # x from client
-                                                                    float(data[1]), # y from client
-                                                                    server_health,  # health from server
-                                                                    float(data[3]), # mouse_x from client
-                                                                    float(data[4]), # mouse_y from client
-                                                                    server_weapon_id) # weapon_id from server
+                                server_health = current_player_server_data[2] 
+                                server_weapon_id = current_player_server_data[5] if len(current_player_server_data) > 5 else "sniper" 
+                                
+                                game_state["players"][player_id] = (float(data[0]), 
+                                                                    float(data[1]), 
+                                                                    server_health,  
+                                                                    float(data[3]), 
+                                                                    float(data[4]), 
+                                                                    server_weapon_id)
                             else:
-                                print(f"Player {player_id} not found for position update, likely disconnected.")
+                                print(f"Player {player_id} not found for position update, likely disconnected before this point.")
                                 break
                     except (ValueError, TypeError) as e:
                         print(f"Invalid position data format from player {player_id}: {data}, error: {e}")
                 else:
-                    print(f"Invalid position data structure from player {player_id}: {data}")
+                    if data: 
+                        print(f"Received unhandled list/tuple data structure from player {player_id}: {data}")
+            
+            elif isinstance(data, dict):
+                print(f"Received unhandled dictionary (not an action) from player {player_id}: {data}")
             
             else:
-                print(f"Unknown data type received from player {player_id}: {type(data)}, data: {data}")
-
+                if data is not None and data != []:
+                    print(f"Unknown or unhandled data type received from player {player_id}: {type(data)}, data: {data}")
             
             projectiles_to_remove = []
             with projectile_lock:
@@ -301,7 +318,7 @@ def threaded_client(conn, player_id):
             
             current_streaks_for_log = data_to_send_client['all_kill_streaks']
             print(f"Player {player_id} state update. Sending my_health: {my_current_health}, all_kill_streaks: {current_streaks_for_log}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}, event: {data_to_send_client['event_for_me']}")
-            conn.sendall(str.encode(make_pos(data_to_send_client)))
+            conn.sendall((make_pos(data_to_send_client) + "\n").encode())
 
         except socket.error as e:
             print(f"Socket error for player {player_id}: {e}")

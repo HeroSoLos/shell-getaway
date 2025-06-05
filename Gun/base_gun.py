@@ -53,7 +53,7 @@ class BaseGun:
     """
     def update_pos(self, x, y):
         self.reload_counter += 1
-        self.shoot_cooldown += 1
+        self.current_shoot_cooldown += 1
         self.x = x
         self.y = y
         
@@ -78,14 +78,16 @@ class BaseGun:
     Returns: A dictionary containing projectile information if a shot is fired, otherwise None.
     """
     def shoot(self, player, target_x, target_y, click_type):
-        # reload
         if self.current_bullets <= 0:
-            self.reload()
-            self.reload_counter = 0
+            if self.reload_counter >= self.reload_time:
+                self.reload()
+                self.reload_counter = 0
             return None
-        
-        # if not (self.reload_counter <= self.reload_time) and not (self.shoot_cooldown <= self.shoot_cooldown):
-        self.shoot_cooldown = 0
+
+        if self.current_shoot_cooldown < self.shoot_cooldown:
+             return None
+
+        self.current_shoot_cooldown = 0
         self.current_bullets -= 1
         
         return {

@@ -7,13 +7,15 @@ from Server.utils import *
 from Server.network import *
 from Gun.projectile import Projectile
 from Gun.compressor import Compressor
+from Gun.shotgun import Shotgun
 import sys
 
 # Weapon Data
 weapon_data = {
     "Sniper": {"class": BaseGun, "sprite": "assets/sniper.png", "params": {"magazine_size": 10, "reload_time": 60, "shoot_cooldown": 6, "projectile_type": 'standard_bullet', "weapon_type_id": "sniper"}},
     "RPG": {"class": BaseGun, "sprite": "assets/RPG.png", "params": {"magazine_size": 1, "reload_time": 100, "shoot_cooldown": 20, "projectile_type": 'rocket', "weapon_type_id": "rpg"}},
-    "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 10, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}}
+    "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 10, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}},
+    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}} # magazine_size and damage will use Shotgun's defaults
 }
 
 # pygame setup
@@ -107,7 +109,7 @@ title_font = pygame.font.SysFont(None, 70)
 button_font = pygame.font.SysFont(None, 50)
 text_font = pygame.font.SysFont(None, 30)
 
-available_weapons = ["Sniper", "RPG", "Compressor"]
+available_weapons = ["Sniper", "RPG", "Compressor", "Shotgun"]
 selected_primary_weapon_index = 0
 selected_secondary_weapon_index = 0
 
@@ -192,14 +194,25 @@ while running:
                 running = False
             if local_player:
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1: # Left mouse button
-                        shoot_command_details = local_player.shoot(local_player, m_x, m_y, "left_click")
-                        if shoot_command_details:
-                            data_to_send = {"action": "shoot", "details": shoot_command_details}
-                    elif event.button == 3: # Right mouse button
-                        shoot_command_details = local_player.shoot(local_player, m_x, m_y, "right_click")
-                        if shoot_command_details:
-                            data_to_send = {"action": "shoot", "details": shoot_command_details}
+                    click_type = None
+                    if event.button == 1:
+                        click_type = "left_click"
+                    elif event.button == 3:
+                        click_type = "right_click"
+
+                    if click_type and local_player:
+                        shoot_results = local_player.shoot(local_player, m_x, m_y, click_type)
+                        
+                        if shoot_results:
+                            current_actions = []
+                            if isinstance(shoot_results, list):
+                                for proj_detail in shoot_results:
+                                    current_actions.append({"action": "shoot", "details": proj_detail})
+                            elif isinstance(shoot_results, dict):
+                                current_actions.append({"action": "shoot", "details": shoot_results})
+                            
+                            if current_actions:
+                                data_to_send = current_actions
                 elif event.type == pygame.KEYDOWN:
                     switched_weapon_id = None
                     if event.key == pygame.K_1:
@@ -249,7 +262,24 @@ while running:
                 camera_offset_x = local_player.position[0] - screen_width / 2
                 camera_offset_y = local_player.position[1] - screen_height / 2
             
-            if not isinstance(data_to_send, dict):
+            # if not isinstance(data_to_send, dict):
+            #    data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
+            if data_to_send is None:
+                data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
+            elif isinstance(data_to_send, list): 
+                is_action_list = True
+                if not data_to_send:
+                    is_action_list = False
+                else:
+                    for item in data_to_send:
+                        if not (isinstance(item, dict) and 'action' in item):
+                            is_action_list = False
+                            break
+                if not is_action_list:
+                    data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
+            elif isinstance(data_to_send, dict) and 'action' in data_to_send:
+                data_to_send = [data_to_send] 
+            else:
                 data_to_send = [local_player.position[0], local_player.position[1], local_player.health, m_x, m_y]
 
         current_game_state = n.send(data_to_send)

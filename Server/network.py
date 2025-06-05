@@ -2,6 +2,17 @@ import socket
 from Server.utils import *
 from Server.config import SERVER_IP
 
+def recv_until_newline(sock):
+    data = b""
+    while True:
+        chunk = sock.recv(2048)
+        if not chunk:
+            break
+        data += chunk
+        if b"\n" in chunk:
+            break
+    return data.decode("utf-8").strip()
+
 class Network:
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,7 +53,7 @@ class Network:
             
             self.client.send(str.encode(make_pos(data_to_server)))
             
-            reply_string = self.client.recv(2048).decode("utf-8")
+            reply_string = recv_until_newline(self.client)
             
             game_state_from_server = read_pos(reply_string)
             
