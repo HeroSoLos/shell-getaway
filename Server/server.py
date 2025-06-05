@@ -49,6 +49,11 @@ next_projectile_id = 0
 player_id_lock = threading.Lock()
 next_player_id_counter = 0
 
+"""
+lots to explain and not a class so I won't write a java doc
+In essence though, all the server side processes (health, request by players, collosions, projectile spawning, player tracking)
+are handled here in this threaded client function.
+"""
 def threaded_client(conn, player_id):
     global next_projectile_id
     try:

@@ -41,6 +41,14 @@ class Player:
     def __repr__(self):
         return f"Player(health={self.health}, move_speed={self.move_speed}, primary_gun={self.primary_gun}, secondary_gun={self.secondary_gun}, sprite={self.sprite})"
 
+    """
+    Getter for which gun they using rn
+    
+    Precondition: The player has an active gun slot.
+    Postcondition: The player has returned the active gun based on the active gun slot.
+    
+    Returns: BaseGun: The active gun (primary or secondary) based on the active gun slot.
+    """
     @property
     def gun(self):
         if self.active_gun_slot == 0:
@@ -117,8 +125,10 @@ class Player:
             
     """
     Args:
+        player (Player): The player object that is shooting.
         target_x (int): The x-coordinate of the target.
         target_y (int): The y-coordinate of the target.
+        click_type (str): The type of click, either 'left_click' or 'right_click'.
     Precondition: The player has a gun.
     Postcondition: The gun may have fired a projectile.
     Returns: A dictionary with projectile details if shot, else None.

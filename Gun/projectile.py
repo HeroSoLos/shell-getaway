@@ -1,5 +1,6 @@
 import math
 
+"""Classes for all projectiles"""
 class Projectile:
     """
     Init the projectile with stuff
@@ -21,10 +22,31 @@ class Projectile:
         self.damage = damage
         self.projectile_type = projectile_type
 
+    """
+    Updates position of bullet
+    Precondition: The projectile has a position and velocity.
+    Postcondition: The projectile has updated its position based on its velocity.
+    Returns: None
+    """
     def update(self):
         self.position[0] += self.velocity[0]
         self.position[1] += self.velocity[1]
 
+    """
+    Draw projectile based on the type
+    
+    Args:
+        screen: pygame screen to draw on
+        pygame: pygame module for drawing
+        x, y (int): pos
+        vx, vy (float): x & y component of velocity vector
+        projectile_type (str): type of projectile, e.g., 'standard_bullet', 'rocket'
+        radius (int, optional): radius for drawing, default is 2
+    
+    Precondition: The projectile has a position and velocity.
+    Postcondition: The projectile has been drawn on the screen.
+    Returns: None
+    """
     def draw(screen, pygame, x, y, vx, vy, projectile_type, radius=2):
         if projectile_type == 'standard_bullet':
             if vx == 0 and vy == 0:

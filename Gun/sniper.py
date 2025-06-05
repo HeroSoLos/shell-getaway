@@ -2,7 +2,16 @@ import pygame
 import math
 from .base_gun import BaseGun
 
+"""Class for Sniper"""
 class Sniper(BaseGun):
+    """
+    Init the gun with magazine size, speed, damage
+    Args:
+        magazine_size (int): self explanatory
+        x (int): x position of the gun
+        y (int): y position of the gun
+        **kwargs, everything else from main/ will be included in BaseGun
+    """
     def __init__(self, x, y, **kwargs):
         magazine_size = kwargs.pop('magazine_size', 3)
         damage = kwargs.pop('damage', 75)

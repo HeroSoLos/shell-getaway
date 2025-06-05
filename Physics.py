@@ -59,6 +59,7 @@ class Physics:
         p: player to cap velocity
     precondition: there is a player with velocity
     postcondition: velocity doesn't exceed limit
+    returns: none
     """
     def capVelocity(self, p):
         cap = 50

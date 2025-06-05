@@ -12,7 +12,12 @@ class BaseGun:
     Init the gun with magazine size, speed, damage
     Args:
         magazine_size (int): self explanatory
-        bullet_speed (float): used to send bullet speed
+        x (int): x position of the gun
+        y (int): y position of the gun
+        sprite (str): path to the gun sprite
+        reload_time (int): time to reload the gun
+        shoot_cooldown (int): time between shots
+        projectile_speed (int): speed of the projectile, default 10
         damage (int, optional): damage, default 1
         projectile_type (str, optional): type of projectile, default 'standard_bullet'
         weapon_type_id (str, optional): specific identifier for the weapon type, default 'base_gun'

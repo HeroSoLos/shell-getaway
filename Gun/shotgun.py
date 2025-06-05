@@ -2,7 +2,16 @@ import pygame
 import math
 from .base_gun import BaseGun
 
+"""Shotgun class"""
 class Shotgun(BaseGun):
+    """
+    Init the gun with magazine size, speed, damage
+    Args:
+        magazine_size (int): self explanatory
+        x (int): x position of the gun
+        y (int): y position of the gun
+        **kwargs, everything else from main/ will be included in BaseGun
+    """
     def __init__(self, x, y, **kwargs):
         magazine_size = kwargs.pop('magazine_size', 2)
         damage = kwargs.pop('damage', 20)
@@ -21,7 +30,19 @@ class Shotgun(BaseGun):
             weapon_type_id=kwargs.pop('weapon_type_id', 'shotgun'),
             **kwargs
         )
-
+    """
+    Shoots 5 bullets
+    Args:
+        player (Player): unused
+        target_x (int): x coordinate of the target
+        target_y (int): y coordinate of the target
+        click_type (str): unused
+        
+    Precondition: There is a mouse point
+    Postcondition: Gun fired
+    
+    Returns: A list of dictionaries containing 5 projectile information
+    """
     def shoot(self, player, target_x, target_y, click_type):
         if self.current_bullets <= 0:
             if self.reload_counter >= self.reload_time:

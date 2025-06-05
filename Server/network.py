@@ -2,6 +2,7 @@ import socket
 from Server.utils import *
 from Server.config import SERVER_IP
 
+"""anti large packet crasher"""
 def recv_until_newline(sock):
     data = b""
     while True:
@@ -14,6 +15,14 @@ def recv_until_newline(sock):
     return data.decode("utf-8").strip()
 
 class Network:
+    """Network class to handle client-server communication for the game.
+    
+    client: A socket object for network communication.
+    server: The IP address of the game server.
+    port: The port number for the game server.
+    addr: A tuple containing the server IP and port.
+    initial_game_state: The initial game state received from the server upon connection.
+    """
     def __init__(self):
         self.client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server = SERVER_IP
@@ -26,6 +35,14 @@ class Network:
         """Returns the initial game state received upon connection."""
         return self.initial_game_state
     
+    """
+    Connects to the game server and retrieves the initial game state.
+    
+    Precondition: The server is running and reachable at the specified address.
+    Postcondition: The client is connected to the server and has received the initial game state.
+    
+    Returns: None if connection fails, otherwise sets initial_game_state with the server's response.
+    """
     def connect(self):
         try:
             self.client.connect(self.addr)
@@ -38,12 +55,16 @@ class Network:
             print(f"Connection error: {e}")
             self.initial_game_state = None
     
-    def send(self, data_to_server):
-        """
-        Sends data to the server and receives the game state.
+    """
+    Sends data to the server and receives the game state.
+    Args:
         data_to_server: Can be player position list [x,y,health] or a shoot command dict.
-        Returns: The full game state dictionary from the server or None on error.
-        """
+    
+    Precondition: The client is connected to the server.
+    Postcondition: The server processes the data and returns the updated game state.
+    Returns: The full game state dictionary from the server or None on error.
+    """
+    def send(self, data_to_server):
         try:
             if self.initial_game_state is None:
                 print("Socket is not connected or initial connection failed. Attempting to reconnect...")
