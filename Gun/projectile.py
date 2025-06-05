@@ -42,3 +42,5 @@ class Projectile:
                 prev_y = y - (vy / magnitude) * line_length
                 
                 pygame.draw.line(screen, (0, 0, 0), (int(prev_x), int(prev_y)), (int(x), int(y)), 2)
+        if projectile_type == "rocket":
+            pygame.draw.circle(screen, (0, 0, 0), (int(x), int(y)), 20)

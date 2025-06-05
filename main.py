@@ -8,14 +8,15 @@ from Server.network import *
 from Gun.projectile import Projectile
 from Gun.compressor import Compressor
 from Gun.shotgun import Shotgun
+from Gun.rpg import RPG
 import sys
 
 # Weapon Data
 weapon_data = {
     "Sniper": {"class": BaseGun, "sprite": "assets/sniper.png", "params": {"magazine_size": 10, "reload_time": 60, "shoot_cooldown": 6, "projectile_type": 'standard_bullet', "weapon_type_id": "sniper"}},
-    "RPG": {"class": BaseGun, "sprite": "assets/RPG.png", "params": {"magazine_size": 1, "reload_time": 100, "shoot_cooldown": 20, "projectile_type": 'rocket', "weapon_type_id": "rpg"}},
+    "RPG": {"class": RPG, "sprite": "assets/RPG.png", "params": {"magazine_size": 1, "reload_time": 200, "shoot_cooldown": 0, "projectile_type": 'rocket', "weapon_type_id": "rpg"}},
     "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 10, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}},
-    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}} # magazine_size and damage will use Shotgun's defaults
+    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}}
 }
 
 # pygame setup

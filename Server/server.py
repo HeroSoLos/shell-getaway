@@ -126,7 +126,9 @@ def threaded_client(conn, player_id):
                                 dir_x = target_x - start_x
                                 dir_y = target_y - start_y
                                 magnitude = math.sqrt(dir_x**2 + dir_y**2)
-                                projectile_speed = 10 
+                                print(details)
+                                projectile_speed = details.get('projectile_speed', 10)
+                                print("Projectile speed" + str(projectile_speed))
                                 if magnitude == 0:
                                     vx, vy = 0, projectile_speed
                                 else:
@@ -234,7 +236,7 @@ def threaded_client(conn, player_id):
 
                         proj_center_x = proj.position[0]
                         proj_center_y = proj.position[1]
-
+                        
                         collided = (player_rect_x_start < proj_center_x < player_rect_x_end and \
                                     player_rect_y_start < proj_center_y < player_rect_y_end)
 
@@ -317,7 +319,7 @@ def threaded_client(conn, player_id):
                 print(f"Player {player_id} has a respawn event: {data_to_send_client['event_for_me']}")
             
             current_streaks_for_log = data_to_send_client['all_kill_streaks']
-            print(f"Player {player_id} state update. Sending my_health: {my_current_health}, all_kill_streaks: {current_streaks_for_log}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}, event: {data_to_send_client['event_for_me']}")
+            # print(f"Player {player_id} state update. Sending my_health: {my_current_health}, all_kill_streaks: {current_streaks_for_log}, other_players: {len(other_players_update_data)}, projectiles: {len(projectiles_data_for_client)}, event: {data_to_send_client['event_for_me']}")
             conn.sendall((make_pos(data_to_send_client) + "\n").encode())
 
         except socket.error as e:

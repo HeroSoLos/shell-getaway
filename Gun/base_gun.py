@@ -17,7 +17,7 @@ class BaseGun:
         projectile_type (str, optional): type of projectile, default 'standard_bullet'
         weapon_type_id (str, optional): specific identifier for the weapon type, default 'base_gun'
     """
-    def __init__(self, magazine_size, x, y, sprite, reload_time, shoot_cooldown, damage=10, projectile_type='standard_bullet', weapon_type_id='base_gun'):
+    def __init__(self, magazine_size, x, y, sprite, reload_time, shoot_cooldown, damage=10, projectile_type='standard_bullet', weapon_type_id='base_gun', projectile_speed=10):
         self.magazine_size = magazine_size
         self.sprite = sprite
         self.weapon_type_id = weapon_type_id
@@ -27,6 +27,7 @@ class BaseGun:
         self.reload_time=reload_time
         self.shoot_cooldown=shoot_cooldown
         self.damage = damage
+        self.projectile_speed=projectile_speed
         self.projectile_type = projectile_type
         
         self.reload_counter = 0
@@ -96,7 +97,8 @@ class BaseGun:
             'target_x': target_x,
             'target_y': target_y,
             'projectile_type': self.projectile_type,
-            'damage': self.damage
+            'damage': self.damage,
+            'projectile_speed': self.projectile_speed
         }
     
     """
