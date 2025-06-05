@@ -19,7 +19,7 @@ weapon_data = {
     "Sniper": {"class": Sniper, "sprite": "assets/sniper.png", "params": {"magazine_size": 3, "reload_time": 200, "shoot_cooldown": 50, "projectile_type": 'standard_bullet', "weapon_type_id": "sniper"}},
     "RPG": {"class": RPG, "sprite": "assets/RPG.png", "params": {"magazine_size": 1, "reload_time": 200, "shoot_cooldown": 0, "projectile_type": 'rocket', "weapon_type_id": "rpg"}},
     "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 50, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}},
-    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}},
+    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 240, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}},
     "AUG": {"class": AUG, "sprite": "assets/Aug.png", "params": {"magazine_size": 30, "reload_time": 150, "shoot_cooldown": 6, "projectile_type": 'standard_bullet', "weapon_type_id": "aug"}},
     "Pistol": {"class": Pistol, "sprite": "assets/Pistol.png", "params": {"magazine_size": 10, "reload_time": 50, "shoot_cooldown": 10, "projectile_type": 'standard_bullet', "weapon_type_id": "pistol"}}
 }
@@ -229,6 +229,10 @@ while running:
                         switched_weapon_id = local_player.switch_weapon(1)
                         print(f"Switched to {switched_weapon_id}")
                         data_to_send = {"action": "switch_weapon", "weapon_id": switched_weapon_id}
+                    elif event.key == pygame.K_r:
+                        if local_player and local_player.gun:
+                            local_player.gun.reload()
+                            print("Reload action triggered by 'R' key.")
 
         # move and collosion stuff
         if local_player:
