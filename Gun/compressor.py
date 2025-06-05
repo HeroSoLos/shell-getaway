@@ -19,8 +19,8 @@ class Compressor(BaseGun):
                 velx_change = 0
                 vely_change = 0
             else:
-                velx_change = (dx / magnitude) * 1
-                vely_change = (dy / magnitude) * 1
+                velx_change = (dx / magnitude) * 25
+                vely_change = (dy / magnitude) * 25
             
             player.velocity[0] += velx_change
             player.velocity[1] += vely_change

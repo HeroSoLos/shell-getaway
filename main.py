@@ -10,14 +10,18 @@ from Gun.compressor import Compressor
 from Gun.shotgun import Shotgun
 from Gun.rpg import RPG
 from Gun.sniper import Sniper
+from Gun.aug import AUG
+from Gun.pistol import Pistol
 import sys
 
 # Weapon Data
 weapon_data = {
     "Sniper": {"class": Sniper, "sprite": "assets/sniper.png", "params": {"magazine_size": 3, "reload_time": 200, "shoot_cooldown": 50, "projectile_type": 'standard_bullet', "weapon_type_id": "sniper"}},
     "RPG": {"class": RPG, "sprite": "assets/RPG.png", "params": {"magazine_size": 1, "reload_time": 200, "shoot_cooldown": 0, "projectile_type": 'rocket', "weapon_type_id": "rpg"}},
-    "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 10, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}},
-    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}}
+    "Compressor": {"class": Compressor, "sprite": "assets/Compressor.png", "params": {"magazine_size":10, "reload_time": 50, "shoot_cooldown": 10, "damage":10, "projectile_type": 'compressor_shot', "weapon_type_id": "compressor"}},
+    "Shotgun": {"class": Shotgun, "sprite": "assets/Shotgun.png", "params": {"reload_time": 70, "shoot_cooldown": 40, "weapon_type_id": "shotgun"}},
+    "AUG": {"class": AUG, "sprite": "assets/Aug.png", "params": {"magazine_size": 30, "reload_time": 150, "shoot_cooldown": 6, "projectile_type": 'standard_bullet', "weapon_type_id": "aug"}},
+    "Pistol": {"class": Pistol, "sprite": "assets/Pistol.png", "params": {"magazine_size": 10, "reload_time": 50, "shoot_cooldown": 10, "projectile_type": 'standard_bullet', "weapon_type_id": "pistol"}}
 }
 
 # pygame setup
@@ -111,7 +115,7 @@ title_font = pygame.font.SysFont(None, 70)
 button_font = pygame.font.SysFont(None, 50)
 text_font = pygame.font.SysFont(None, 30)
 
-available_weapons = ["Sniper", "RPG", "Compressor", "Shotgun"]
+available_weapons = ["Sniper", "RPG", "Compressor", "Shotgun", "AUG", "Pistol"]
 selected_primary_weapon_index = 0
 selected_secondary_weapon_index = 0
 
