@@ -113,7 +113,7 @@ selected_secondary_weapon_index = 0
 
 while running:
     if game_state == "menu":
-        screen.fill((0, 0, 0))  # Fill screen with black
+        screen.fill((0, 0, 0))
 
         # Title
         title_text = title_font.render("Shell Getaway", True, (255, 255, 255))
@@ -193,7 +193,11 @@ while running:
             if local_player:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1: # Left mouse button
-                        shoot_command_details = local_player.shoot(local_player, m_x, m_y)
+                        shoot_command_details = local_player.shoot(local_player, m_x, m_y, "left_click")
+                        if shoot_command_details:
+                            data_to_send = {"action": "shoot", "details": shoot_command_details}
+                    elif event.button == 3: # Right mouse button
+                        shoot_command_details = local_player.shoot(local_player, m_x, m_y, "right_click")
                         if shoot_command_details:
                             data_to_send = {"action": "shoot", "details": shoot_command_details}
                 elif event.type == pygame.KEYDOWN:
