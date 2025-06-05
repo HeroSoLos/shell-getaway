@@ -165,6 +165,22 @@ def threaded_client(conn, player_id):
                                     print(f"Player {player_id} not found for weapon switch, likely disconnected.")
                         else:
                             print(f"Switch weapon command from player {player_id} missing 'weapon_id': {action_item}")
+                    
+                    elif action_item.get('action') == 'restore_health':
+                        with game_state_lock:
+                            if player_id in game_state["players"] and player_id in game_state["kill_streaks"]:
+                                current_kills = game_state["kill_streaks"][player_id]
+                                if current_kills >= 2:
+                                    current_player_data = game_state["players"][player_id]
+                                    px, py, _old_health, mouse_x, mouse_y, p_active_weapon_id = current_player_data
+                                    
+                                    game_state["players"][player_id] = (px, py, 100, mouse_x, mouse_y, p_active_weapon_id)
+                                    game_state["kill_streaks"][player_id] = current_kills - 2
+                                    print(f"Player {player_id} restored health. Kills updated to: {game_state['kill_streaks'][player_id]}")
+                                else:
+                                    print(f"Player {player_id} attempted to restore health but had insufficient kills: {current_kills}")
+                            else:
+                                print(f"Player {player_id} not found in game_state['players'] or game_state['kill_streaks'] for restore_health action.")
                     else:
                         print(f"Unknown action in action list/dict from player {player_id}: {action_item}")
 

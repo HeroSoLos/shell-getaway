@@ -233,6 +233,11 @@ while running:
                         if local_player and local_player.gun:
                             local_player.gun.reload()
                             print("Reload action triggered by 'R' key.")
+                    elif event.key == pygame.K_h:
+                        if local_player and local_player.health < 100:
+                            local_player.restore_health()
+                            data_to_send = {"action": "restore_health"}
+                            print(f"Player {my_player_id} pressed H to restore health.")
 
         # move and collosion stuff
         if local_player:

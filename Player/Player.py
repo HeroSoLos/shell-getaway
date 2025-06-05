@@ -61,6 +61,12 @@ class Player:
         self.velocity[0] += direction[0] * self.move_speed
         self.velocity[1] += direction[1] * self.move_speed
         
+        
+    """Debug for health"""
+    def restore_health(self):
+        print(f"DEBUG Player.restore_health: Sending request to server.", file=sys.stderr)
+        pass
+
     """
     Update position.
     Precondition: The player has a velocity.
